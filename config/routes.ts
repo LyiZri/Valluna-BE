@@ -62,7 +62,27 @@
   {
     path: '/games-listings',
     name: 'Games Listings',
-    component: './GamesListings',
+    routes: [
+      {
+        path: '/games-listings/overview',
+        name: 'Overview',
+        component: './GamesListings/Overview',
+      },
+      {
+        path: '/games-listings/game-listings-form',
+        component: './GamesListings/Overview/gameListingForm',
+      },
+      {
+        path: '/games-listings/blockchain',
+        name: 'BlockChain',
+        component: './GamesListings/BlockChain',
+      },
+      {
+        path: '/games-listings/categories',
+        name: 'Categories',
+        component: './GamesListings/Categories',
+      },
+    ],
   },
   {
     path: '/articels',

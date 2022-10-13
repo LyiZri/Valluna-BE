@@ -26,3 +26,8 @@ export interface IButtonItem {
   type?: ButtonType;
   method: Function;
 }
+
+export interface IDynamicUrlItem {
+  url: string;
+  name: string;
+}

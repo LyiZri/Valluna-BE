@@ -10,13 +10,21 @@ import ContentCard from '@/components/ContentCard';
 import { history } from 'umi';
 import { gameListingValue, IGame } from '@/types/gameListing';
 import { getChainValue } from '@/types/chainType';
-import { editStatusData } from '../../types/gameListing';
+import { editStatusData } from '../../../types/gameListing';
+import { LoadingOutlined } from '@ant-design/icons';
 export default function GameListing() {
   const [searchValue, setSearchValue] = useState({});
   const [list, setList] = useState<IGame[]>();
+  const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
   const [loading, setLoading] = useState({
     tableLoading: false,
+    changePublishLoading: false,
+    deleteLoading: false,
   });
+  const rowSelection = {
+    selectedRowKeys,
+    onChange: setSelectedRowKeys,
+  };
   const searchItem: IFormItem[] = [
     {
       name: 'gname',
@@ -53,6 +61,26 @@ export default function GameListing() {
       render: (
         <Button type="primary" className="mr-4" onClick={() => onPushBanner()}>
           Create New Banner
+        </Button>
+      ),
+    },
+    {
+      name: '',
+      type: '',
+      col: 3,
+      render: (
+        <Button type="primary" className="mr-4" onClick={() => onPublishStatusChange(0)}>
+          Unpublish
+        </Button>
+      ),
+    },
+    {
+      name: '',
+      type: '',
+      col: 3,
+      render: (
+        <Button type="primary" className="mr-4" onClick={() => onPublishStatusChange(1)}>
+          Publish
         </Button>
       ),
     },
@@ -132,16 +160,25 @@ export default function GameListing() {
       title: 'Last Edited',
       dataIndex: 'endEditedDate',
       key: 'endEditedDate',
-      render: (_, { endEditedDate }) => {
-        return <p>{timestampToTime(endEditedDate)}</p>;
+      render: (_, { lastEditedDate }) => {
+        return <p>{timestampToTime(lastEditedDate)}</p>;
       },
     },
     {
       title: 'Action',
       key: 'action',
       width: 180,
-      render: (_, record) => (
+      render: (_, record, index) => (
         <Space size="middle">
+          {loading.changePublishLoading ? (
+            <LoadingOutlined />
+          ) : (
+            <IconFont
+              type={record.status == 1 ? 'icon-unsee' : 'icon-see'}
+              className="text-black text-xl cursor-pointer"
+              onClick={() => onPublishStatusChange(record.status, [index])}
+            />
+          )}
           <IconFont
             type="icon-bianji"
             onClick={() => {
@@ -149,11 +186,15 @@ export default function GameListing() {
             }}
             className="text-black text-xl cursor-pointer"
           />
-          <IconFont
-            type="icon-delete"
-            onClick={() => {}}
-            className="text-black text-xl cursor-pointer"
-          />
+          {loading.deleteLoading ? (
+            <LoadingOutlined />
+          ) : (
+            <IconFont
+              type="icon-delete"
+              onClick={() => onDelete(index)}
+              className="text-black text-xl cursor-pointer"
+            />
+          )}
         </Space>
       ),
     },
@@ -163,10 +204,57 @@ export default function GameListing() {
     setList(gameListingValue);
     setLoading({ ...loading, tableLoading: false });
   };
+  //change Public Status
+  const onPublishStatusChange = (status = 0, statusArr = [-1]) => {
+    setLoading({
+      ...loading,
+      tableLoading: true,
+      changePublishLoading: true,
+    });
+    const _list = (list as IGame[]).concat([]);
+    if (statusArr[0] == -1 && statusArr.length == 1) {
+      console.log(selectedRowKeys);
+      const isStatusUnify = selectedRowKeys.every((item: React.Key, _) => {
+        return _list[(item as number) - 1].status == status;
+      });
+      if (isStatusUnify) {
+        selectedRowKeys.map((item: React.Key, _) => {
+          _list[(item as number) - 1].status = Number(!status);
+        });
+      }
+    } else {
+      statusArr.map((item: number, _) => {
+        _list[item].status = Number(!status);
+      });
+    }
+    setList(_list);
+    setLoading({
+      ...loading,
+      tableLoading: false,
+      changePublishLoading: false,
+    });
+  };
+  const onDelete = async (index: number) => {
+    setLoading({
+      ...loading,
+      deleteLoading: true,
+      tableLoading: true,
+    });
+    const _list = list?.concat([]);
+    _list?.splice(index, 1);
+    console.log(_list);
+
+    setList(_list);
+    setLoading({
+      ...loading,
+      deleteLoading: false,
+      tableLoading: false,
+    });
+  };
   const onPushBanner = (gname?: string) => {
     gname
-      ? history.push(`/homepage/banner-form?gname=${gname}`)
-      : history.push('/homepage/banner-form');
+      ? history.push(`/games-listings/game-listings-form?gname=${gname}`)
+      : history.push('/games-listings/game-listings-form');
   };
   const onSearch = (e: any) => {
     setSearchValue(e);
@@ -188,7 +276,13 @@ export default function GameListing() {
       <section>
         <ContentCard>
           <SearchBar className={'mb-4'} searchItem={searchItem} search={onSearch} />
-          <Table rowKey={'gid'} loading={loading.tableLoading} columns={colums} dataSource={list} />
+          <Table
+            rowSelection={rowSelection}
+            rowKey={'gid'}
+            loading={loading.tableLoading}
+            columns={colums}
+            dataSource={list}
+          />
         </ContentCard>
       </section>
     </div>

@@ -45,6 +45,12 @@ export default defineConfig({
   manifest: {
     basePath: '/',
   },
+  metas: [
+    {
+      name: 'referrer',
+      content: 'no-referrer',
+    },
+  ],
   // Fast Refresh 热更新
   fastRefresh: {},
   openAPI: [

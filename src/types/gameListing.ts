@@ -6,7 +6,14 @@ export interface IGame {
   status?: number;
   editStatus?: number;
   operator?: string;
-  endEditedDate: string;
+  lastEditedDate: string;
+}
+export interface ICategories {
+  id: number;
+  name: string;
+  num?: number;
+  creationdate?: string;
+  operator?: string;
 }
 export const StatusData = {
   0: 'Publish',
@@ -26,7 +33,7 @@ export const gameListingValue: IGame[] = [
     status: 0,
     editStatus: 0,
     operator: 'nihao@gmail.com',
-    endEditedDate: '0',
+    lastEditedDate: '0',
   },
   {
     gid: 2,
@@ -36,7 +43,7 @@ export const gameListingValue: IGame[] = [
     status: 1,
     editStatus: 0,
     operator: 'nihao@gmail.com',
-    endEditedDate: '0',
+    lastEditedDate: '0',
   },
   {
     gid: 3,
@@ -46,6 +53,29 @@ export const gameListingValue: IGame[] = [
     status: 0,
     editStatus: 1,
     operator: 'nihao@gmail.com',
-    endEditedDate: '0',
+    lastEditedDate: '0',
+  },
+];
+export const categoriesList: ICategories[] = [
+  {
+    id: 1,
+    name: '123',
+    num: 10,
+    creationdate: '0',
+    operator: '123@123.com',
+  },
+  {
+    id: 2,
+    name: '123',
+    num: 10,
+    creationdate: '0',
+    operator: '12332@123.com',
+  },
+  {
+    id: 3,
+    name: '123',
+    num: 10,
+    creationdate: '0',
+    operator: '12353@123.com',
   },
 ];
