@@ -1,16 +1,23 @@
 import ContentCard from '@/components/ContentCard';
 import IconFont from '@/components/IconFont';
 import SearchBar from '@/components/SearchBar';
-import { IChainValue, chainValueList } from '@/types/chainType';
+import { IChainValue } from '@/types/chainType';
 import { IFormItem } from '@/types/form';
 import { timestampToTime } from '@/utils/format';
 import { LoadingOutlined } from '@ant-design/icons';
-import { Avatar, Space, Table, Modal, Input, Button } from 'antd';
+import { Avatar, Space, Table, Modal, Input, Button, message } from 'antd';
 import { ColumnsType } from 'antd/lib/table';
 import { useState } from 'react';
 import { useEffect } from 'react';
 import ContentForm from '@/components/ContentForm';
 import { useForm } from 'antd/lib/form/Form';
+import {
+  addGLBlockChainItem,
+  editGLBlockChainItem,
+  getGLBlockChainList,
+} from '@/service/gamelistings';
+import FileUpload from '@/components/FileUpload';
+import { Form } from 'antd';
 
 export default function BlockChain() {
   const [loading, setLoading] = useState({
@@ -18,14 +25,15 @@ export default function BlockChain() {
     deleteLoading: false,
   });
   const [form] = useForm();
-  const [modalStatus, setModalStatus] = useState({
+  const [modalData, setModalData] = useState({
     visiable: false,
     isEdit: false,
     name: '',
-    imgUrl: '',
+    img_url: '',
     index: 0,
+    ticker: '',
   });
-  const [list, setList] = useState<IChainValue[]>();
+  const [list, setList] = useState<IChainValue[]>([]);
   const searchItem: IFormItem[] = [
     {
       name: 'name',
@@ -54,23 +62,28 @@ export default function BlockChain() {
     },
     {
       title: 'Image',
-      dataIndex: 'imageUrl',
-      render: (_, { imageUrl }) => {
-        return <Avatar src={imageUrl} size={24} />;
+      dataIndex: 'img_url',
+      render: (_, { img_url }) => {
+        return <Avatar src={img_url} size={24} />;
       },
     },
     {
       title: 'Tagged Games',
-      dataIndex: 'num',
-      key: 'num',
+      dataIndex: 'tagged_games',
+      key: 'tagged_games',
     },
     {
       title: 'Creation Date',
-      dataIndex: 'creationdate',
-      key: 'creationdate',
-      render: (_, { creationdate }) => {
-        return <p>{timestampToTime(creationdate as string)}</p>;
+      dataIndex: 'time',
+      key: 'time',
+      render: (_, { time }) => {
+        return <p>{timestampToTime(time as string)}</p>;
       },
+    },
+    {
+      title: 'Operator',
+      dataIndex: 'operator',
+      key: 'operator',
     },
     {
       title: 'Action',
@@ -98,33 +111,21 @@ export default function BlockChain() {
       ),
     },
   ];
-  const chainForm = [
-    {
-      name: 'id',
-      type: '',
-    },
-    {
-      name: 'name',
-      label: 'Name',
-      type: 'input',
-      require: true,
-      placeholder: 'Please input name',
-    },
-  ];
   const getList = async () => {
     setLoading({
       ...loading,
       tableLoading: true,
     });
-    setList(chainValueList);
+    const { data } = await getGLBlockChainList({});
+    setList(data);
     setLoading({
       ...loading,
       tableLoading: false,
     });
   };
   const onEdit = (record: IChainValue, index: number) => {
-    setModalStatus({
-      ...modalStatus,
+    setModalData({
+      ...modalData,
       ...record,
       visiable: true,
       index,
@@ -137,47 +138,60 @@ export default function BlockChain() {
     setList(_list);
   };
   const onCreate = async () => {
-    setModalStatus({
-      ...modalStatus,
+    setModalData({
+      ...modalData,
       isEdit: false,
       visiable: true,
     });
   };
   const onSaveForm = async (e: any) => {
     console.log(e);
-
-    const _list = list?.concat([]);
-    console.log(modalStatus);
-    if (modalStatus.isEdit) {
-      (_list as IChainValue[])[modalStatus.index].name = e.name;
-      console.log(_list);
-    } else {
-      _list?.push({
-        id: 123,
-        name: e.name,
-        imageUrl: modalStatus.imgUrl || '',
-        num: 0,
+    let _list = list?.concat([]);
+    if (modalData.isEdit) {
+      const res = await editGLBlockChainItem({
+        ...modalData,
+        img_url: modalData.img_url,
+        blid: _list[modalData.index].blid,
       });
+      if (res.code == 1) {
+        (_list as IChainValue[])[modalData.index] = {
+          ..._list[modalData.index],
+          ...modalData,
+          img_url: modalData.img_url,
+        };
+      }
+    } else {
+      const nameCheck = _list?.some((item, index) => {
+        return item.name == e.name;
+      });
+      if (nameCheck) {
+        message.error(e.name + ' already exists');
+        return;
+      }
+      const res = await addGLBlockChainItem({
+        ...e,
+        img_url: modalData.img_url,
+      });
+      res.code == 1 &&
+        _list?.push({
+          ...res.data,
+        });
     }
     setList(_list);
-    setModalStatus({
-      visiable: false,
-      isEdit: false,
-      name: '',
-      imgUrl: '',
-      index: 0,
-    });
+    onCancel();
   };
   const onSearch = async (e: any) => {
     console.log(e);
   };
   const onCancel = () => {
-    setModalStatus({
+    form.resetFields();
+    setModalData({
       visiable: false,
       isEdit: false,
       name: '',
-      imgUrl: '',
+      img_url: '',
       index: 0,
+      ticker: '',
     });
   };
   useEffect(() => {
@@ -199,24 +213,55 @@ export default function BlockChain() {
               Create New
             </Button>
           </div>
-          <Table rowKey={'id'} loading={loading.tableLoading} columns={colums} dataSource={list} />
+          <Table
+            rowKey={'blid'}
+            loading={loading.tableLoading}
+            columns={colums}
+            dataSource={list}
+          />
         </ContentCard>
       </section>
       <Modal
-        open={modalStatus.visiable}
+        open={modalData.visiable}
         onOk={() => form.submit()}
         onCancel={onCancel}
-        title={modalStatus.isEdit ? `Edit:${modalStatus.name}` : 'add New Chain'}
+        title={modalData.isEdit ? `Edit:${modalData.name}` : 'add New Chain'}
       >
-        <ContentForm
-          form={form}
-          initialValues={{
-            name: modalStatus.name,
-            imageUrl: modalStatus.imgUrl,
-          }}
-          formItem={chainForm}
-          onFinish={onSaveForm}
-        ></ContentForm>
+        <Form form={form} onFinish={onSaveForm}>
+          <Form.Item label="Name" required>
+            <Input
+              value={modalData.name}
+              onChange={(e) => {
+                setModalData({
+                  ...modalData,
+                  name: e.target.value,
+                });
+              }}
+            />
+          </Form.Item>
+          <Form.Item label="Ticker" required>
+            <Input
+              value={modalData.ticker}
+              onChange={(e) => {
+                setModalData({
+                  ...modalData,
+                  ticker: e.target.value,
+                });
+              }}
+            />
+          </Form.Item>
+          <Form.Item label="Image" required>
+            <FileUpload
+              defaultSrc={modalData.isEdit ? modalData.img_url : ''}
+              onSuccess={(e: string) => {
+                setModalData({
+                  ...modalData,
+                  img_url: e,
+                });
+              }}
+            />
+          </Form.Item>
+        </Form>
       </Modal>
     </div>
   );

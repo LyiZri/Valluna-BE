@@ -4,13 +4,14 @@ import SearchBar from '@/components/SearchBar';
 import { IFormItem } from '@/types/form';
 import { timestampToTime } from '@/utils/format';
 import { LoadingOutlined } from '@ant-design/icons';
-import { Avatar, Space, Table, Modal, Input, Button } from 'antd';
+import { Avatar, Space, Table, Modal, Input, Button, message } from 'antd';
 import { ColumnsType } from 'antd/lib/table';
 import { useState } from 'react';
 import { useEffect } from 'react';
 import ContentForm from '@/components/ContentForm';
 import { useForm } from 'antd/lib/form/Form';
-import { categoriesList, ICategories } from '@/types/gameListing';
+import { ICategories } from '@/types/gameListing';
+import { addCategoryItem, editCategoryItem, getCategoryList } from '@/service/gamelistings';
 
 export default function Categories() {
   const [loading, setLoading] = useState({
@@ -59,10 +60,10 @@ export default function Categories() {
     },
     {
       title: 'Creation Date',
-      dataIndex: 'creationdate',
-      key: 'creationdate',
-      render: (_, { creationdate }) => {
-        return <p>{timestampToTime(creationdate as string)}</p>;
+      dataIndex: 'time',
+      key: 'time',
+      render: (_, { time }) => {
+        return <p>{timestampToTime(time as string)}</p>;
       },
     },
     {
@@ -98,10 +99,6 @@ export default function Categories() {
   ];
   const chainForm = [
     {
-      name: 'id',
-      type: '',
-    },
-    {
       name: 'name',
       label: 'Name',
       type: 'input',
@@ -114,7 +111,8 @@ export default function Categories() {
       ...loading,
       tableLoading: true,
     });
-    setList(categoriesList);
+    const res = await getCategoryList({});
+    setList(res?.data);
     setLoading({
       ...loading,
       tableLoading: false,
@@ -142,19 +140,23 @@ export default function Categories() {
     });
   };
   const onSaveForm = async (e: any) => {
-    console.log(e);
-
     const _list = list?.concat([]);
-    console.log(modalStatus);
+    const nameCheck = _list?.some((item, index) => {
+      return item.name == e.name;
+    });
+    if (nameCheck) {
+      message.error(e.name + ' already exists');
+      return;
+    }
     if (modalStatus.isEdit) {
-      (_list as ICategories[])[modalStatus.index].name = e.name;
-      console.log(_list);
+      const res = await editCategoryItem({ oldname: modalStatus.name, newname: e.name });
+      res?.code == 1 && ((_list as ICategories[])[modalStatus.index].name = e.name);
     } else {
-      _list?.push({
-        id: 123,
-        name: e.name,
-        num: 0,
-      });
+      const res = await addCategoryItem({ name: e.name });
+      res?.code == 1 &&
+        _list?.push({
+          name: e.name,
+        });
     }
     setList(_list);
     setModalStatus({
@@ -196,7 +198,12 @@ export default function Categories() {
               Create New
             </Button>
           </div>
-          <Table rowKey={'id'} loading={loading.tableLoading} columns={colums} dataSource={list} />
+          <Table
+            rowKey={'name'}
+            loading={loading.tableLoading}
+            columns={colums}
+            dataSource={list}
+          />
         </ContentCard>
       </section>
       <Modal

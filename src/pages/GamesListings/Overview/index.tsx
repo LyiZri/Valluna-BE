@@ -1,17 +1,16 @@
 import SearchBar from '@/components/SearchBar';
 import { IFormItem } from '@/types/form';
-import { Button, Image, Space, Switch, Table, Avatar, Tag } from 'antd';
+import { Button, Image, Space, Switch, Table, Avatar, Tag, message } from 'antd';
 import { useState } from 'react';
 import { useEffect } from 'react';
 import { ColumnsType } from 'antd/lib/table';
 import { timestampToTime } from '@/utils/format';
 import IconFont from '@/components/IconFont';
 import ContentCard from '@/components/ContentCard';
-import { history } from 'umi';
-import { gameListingValue, IGame } from '@/types/gameListing';
-import { getChainValue } from '@/types/chainType';
-import { editStatusData } from '../../../types/gameListing';
+import { history, useModel } from 'umi';
+import { IGame } from '@/types/gameListing';
 import { LoadingOutlined } from '@ant-design/icons';
+import { deleteGLOverviewItem, getGLOverviewList } from '@/service/gamelistings';
 export default function GameListing() {
   const [searchValue, setSearchValue] = useState({});
   const [list, setList] = useState<IGame[]>();
@@ -19,15 +18,15 @@ export default function GameListing() {
   const [loading, setLoading] = useState({
     tableLoading: false,
     changePublishLoading: false,
-    deleteLoading: false,
   });
+  const { setGlInfo } = useModel('glInfo');
   const rowSelection = {
     selectedRowKeys,
     onChange: setSelectedRowKeys,
   };
   const searchItem: IFormItem[] = [
     {
-      name: 'gname',
+      name: 'game_name',
       type: 'input',
       col: 3,
       placeholder: 'Game Name',
@@ -94,8 +93,8 @@ export default function GameListing() {
   const colums: ColumnsType<IGame> = [
     {
       title: 'Game Name ',
-      dataIndex: 'gname',
-      key: 'gname',
+      dataIndex: 'game_name',
+      key: 'game_name',
     },
     {
       title: 'Site URL',
@@ -104,27 +103,27 @@ export default function GameListing() {
     },
     {
       title: 'Chain',
-      dataIndex: 'chainlist',
-      key: 'chainlist',
-      render: (_, { chainlist }) => {
-        return (
-          <Avatar.Group>
-            {chainlist?.map((item: number, index: number) => {
-              const chainValue = getChainValue(item);
-              if (index < 2 || (index == 2 && chainlist.length == 3)) {
-                return <Avatar src={chainValue.imageUrl} key={chainValue.id} size={24} />;
-              } else if (index == 2 && chainlist.length > 3) {
-                return (
-                  <Avatar key={chainValue.id} size={24}>
-                    +{chainlist.length - 2}
-                  </Avatar>
-                );
-              } else {
-                return;
-              }
-            })}
-          </Avatar.Group>
-        );
+      dataIndex: 'game_blockchain',
+      key: 'game_blockchain',
+      render: (_, { game_blockchain }) => {
+        // return (
+        //   <Avatar.Group>
+        //     {game_blockchain?.map((item: number, index: number) => {
+        //       const chainValue = getChainValue(item);
+        //       if (index < 2 || (index == 2 && game_blockchain.length == 3)) {
+        //         return <Avatar src={chainValue.imageUrl} key={chainValue.id} size={24} />;
+        //       } else if (index == 2 && game_blockchain.length > 3) {
+        //         return (
+        //           <Avatar key={chainValue.id} size={24}>
+        //             +{game_blockchain.length - 2}
+        //           </Avatar>
+        //         );
+        //       } else {
+        //         return;
+        //       }
+        //     })}
+        //   </Avatar.Group>
+        // );
       },
     },
     {
@@ -182,28 +181,48 @@ export default function GameListing() {
           <IconFont
             type="icon-bianji"
             onClick={() => {
-              onPushBanner(record.gname);
+              onPushBanner(record.glid, index);
             }}
             className="text-black text-xl cursor-pointer"
           />
-          {loading.deleteLoading ? (
-            <LoadingOutlined />
-          ) : (
-            <IconFont
-              type="icon-delete"
-              onClick={() => onDelete(index)}
-              className="text-black text-xl cursor-pointer"
-            />
-          )}
+          <IconFont
+            type="icon-delete"
+            onClick={() => onDelete(record.glid as string, index)}
+            className="text-black text-xl cursor-pointer"
+          />
         </Space>
       ),
     },
   ];
   const getList = async () => {
     setLoading({ ...loading, tableLoading: true });
-    setList(gameListingValue);
+    const res = await getGLOverviewList({ page: 1, size: 10 });
+
+    let _list: IGame[] = [];
+    if (res.code != 1) {
+      setLoading({ ...loading, tableLoading: false });
+      return;
+    }
+    res.data.map((item: any, index: number) => {
+      _list.push({
+        glid: item.glid,
+        // game_name: item.draft.game_name,
+        surl: item.draft.official_links.website,
+        // game_blockchain: item.draft.game_blockchain,
+        status: item.status,
+        operator: item.operator,
+        lastEditedDate: item.time,
+        ...item.draft,
+      });
+    });
+    console.log(_list);
+
+    // debugger;
+    setList(_list);
+
     setLoading({ ...loading, tableLoading: false });
   };
+
   //change Public Status
   const onPublishStatusChange = (status = 0, statusArr = [-1]) => {
     setLoading({
@@ -234,26 +253,29 @@ export default function GameListing() {
       changePublishLoading: false,
     });
   };
-  const onDelete = async (index: number) => {
+  const onDelete = async (glid: string, index: number) => {
     setLoading({
       ...loading,
-      deleteLoading: true,
       tableLoading: true,
     });
-    const _list = list?.concat([]);
-    _list?.splice(index, 1);
-    console.log(_list);
-
-    setList(_list);
+    const res = await deleteGLOverviewItem({ glid });
+    if (res.code == 0) {
+      const _list = list?.concat([]);
+      _list?.splice(index, 1);
+      setList(_list);
+    } else {
+    }
     setLoading({
       ...loading,
-      deleteLoading: false,
       tableLoading: false,
     });
   };
-  const onPushBanner = (gname?: string) => {
-    gname
-      ? history.push(`/games-listings/game-listings-form?gname=${gname}`)
+  const onPushBanner = (glid?: string, index = 0) => {
+    console.log(index);
+
+    index != undefined && setGlInfo((list as IGame[])[index]);
+    glid
+      ? history.push(`/games-listings/game-listings-form?glid=${glid}`)
       : history.push('/games-listings/game-listings-form');
   };
   const onSearch = (e: any) => {
@@ -278,7 +300,7 @@ export default function GameListing() {
           <SearchBar className={'mb-4'} searchItem={searchItem} search={onSearch} />
           <Table
             rowSelection={rowSelection}
-            rowKey={'gid'}
+            rowKey={'glid'}
             loading={loading.tableLoading}
             columns={colums}
             dataSource={list}

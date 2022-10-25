@@ -1,18 +1,29 @@
 export interface IGame {
-  gid: number;
-  gname?: string;
+  glid?: string;
+  game_name?: string;
   surl?: string;
-  chainlist?: number[];
+  game_blockchain?: number[];
   status?: number;
   editStatus?: number;
   operator?: string;
   lastEditedDate: string;
+  gamedes?: string;
+  official_links?: any;
+  download_links?: any;
+  additional_media?: any;
+  game_media?: any;
+}
+export interface IMedia {
+  name: string;
+  type: number;
+  url: string;
+  enable: number;
+  rank: number;
 }
 export interface ICategories {
-  id: number;
   name: string;
   num?: number;
-  creationdate?: string;
+  time?: string;
   operator?: string;
 }
 export const StatusData = {
@@ -23,59 +34,3 @@ export const editStatusData = {
   0: 'Unpublished Changes',
   1: 'Up to Date',
 };
-
-export const gameListingValue: IGame[] = [
-  {
-    gid: 1,
-    gname: 'Axie',
-    surl: 'axie.game',
-    chainlist: [1, 2, 3, 4],
-    status: 0,
-    editStatus: 0,
-    operator: 'nihao@gmail.com',
-    lastEditedDate: '0',
-  },
-  {
-    gid: 2,
-    gname: '12',
-    surl: 'axie.game',
-    chainlist: [1, 2, 3],
-    status: 1,
-    editStatus: 0,
-    operator: 'nihao@gmail.com',
-    lastEditedDate: '0',
-  },
-  {
-    gid: 3,
-    gname: '123',
-    surl: 'axie.game',
-    chainlist: [1, 2, 3],
-    status: 0,
-    editStatus: 1,
-    operator: 'nihao@gmail.com',
-    lastEditedDate: '0',
-  },
-];
-export const categoriesList: ICategories[] = [
-  {
-    id: 1,
-    name: '123',
-    num: 10,
-    creationdate: '0',
-    operator: '123@123.com',
-  },
-  {
-    id: 2,
-    name: '123',
-    num: 10,
-    creationdate: '0',
-    operator: '12332@123.com',
-  },
-  {
-    id: 3,
-    name: '123',
-    num: 10,
-    creationdate: '0',
-    operator: '12353@123.com',
-  },
-];

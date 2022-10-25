@@ -1,21 +1,16 @@
 import ContentCard from '@/components/ContentCard';
 import ContentHeader from '@/components/ContentHeader';
-import { chainValueList, IChainValue } from '@/types/chainType';
-import { categoriesList, ICategories, IMedia } from '@/types/gameListing';
-import { beforeUpload, getBase64 } from '@/utils/file';
-import { LoadingOutlined, PlusOutlined } from '@ant-design/icons';
-import { Avatar, Button, Form, Input, Select, Upload, UploadProps } from 'antd';
-import { RcFile, UploadChangeParam, UploadFile } from 'antd/lib/upload';
+import { ICategories, IMedia, IGame } from '@/types/gameListing';
+import { Avatar, Button, Form, Input, Select, message, Modal } from 'antd';
 import { useState } from 'react';
 import { useEffect } from 'react';
-import { history } from 'umi';
-import axios from 'axios';
+import { history, useModel } from 'umi';
 import OfficialLinks from './components/OfficialLinks';
-import { IDynamicUrlItem } from '../../../types/form';
 import ContentEditor from '@/components/ContentEditor';
-import { getCoinPriceList } from '../../../service/other';
-import TokenTicker from './components/TokenTicker';
+import { getCoinPriceList } from '@/service/other';
 import Media from './components/Media';
+import FileUpload from '@/components/FileUpload';
+import { getCategoryList, editGLOverviewItem, addGLOverviewItem } from '@/service/gamelistings';
 
 interface IProps {
   match: any;
@@ -27,72 +22,30 @@ export default function BannerForm({ match, location }: IProps) {
   const [richText, setRichText] = useState('');
   const [loading, setLoading] = useState({
     imageLoading: false,
+    categoriesListLoding: false,
+    finishLoading: false,
   });
-  const [officialLinksList, setOfficialLinksList] = useState<IDynamicUrlItem[]>([
-    {
-      name: 'whitepaper',
-      url: '',
-    },
-  ]);
-  const [addMediaList, setAddMediaList] = useState<IDynamicUrlItem[]>([
-    {
-      name: 'Telegram',
-      url: '',
-    },
-    {
-      name: 'Reddit',
-      url: '',
-    },
-    {
-      name: 'Medium',
-      url: '',
-    },
-  ]);
-  const [dowloadLinks, setDownloadList] = useState<IDynamicUrlItem[]>([
-    {
-      name: 'PC',
-      url: '',
-    },
-    {
-      name: 'Android',
-      url: '',
-    },
-    {
-      name: 'IOS',
-      url: '',
-    },
-  ]);
+  const [modalValue, setModalValue] = useState({
+    visiable: false,
+    name: '',
+    url: '',
+    // 0:official links 1:addtional media
+    type: 0,
+  });
+  const { glInfo } = useModel('glInfo');
+  const [formValue, setFormValue] = useState<IGame>();
+  const [categoryList, setCategoryList] = useState([]);
   const [mediaList, setMediaList] = useState<IMedia[]>([]);
   const [priceList, setPriceList] = useState([]);
-  let bname = location.query.bname;
-  const [isUpdated, setIsUpdated] = useState(() => {
-    if (bname) {
+  const [linksListValue, setLinksListValue] = useState({ pc: 4, android: 4, ios: 4 });
+  let glid = location.query.glid;
+  const [isUpdated, setIsUpdated] = useState<any>(() => {
+    if (glid) {
       return true;
     } else {
       return false;
     }
   });
-  const handleChange: UploadProps['onChange'] = (info: UploadChangeParam<UploadFile>) => {
-    if (info.file.status === 'uploading') {
-      setLoading({ ...loading, imageLoading: true });
-      return;
-    }
-    if (info.file.status === 'done') {
-      // Get this url from response in real world.
-      getBase64(info.file.originFileObj as RcFile, (url) => {
-        console.log(url);
-
-        setLoading({ ...loading, imageLoading: false });
-        setImageUrl(url);
-      });
-    }
-  };
-  const uploadButton = (
-    <div>
-      {loading.imageLoading ? <LoadingOutlined /> : <PlusOutlined />}
-      <div style={{ marginTop: 8 }}>Upload</div>
-    </div>
-  );
   const getPrice = async () => {
     const res = await getCoinPriceList({
       page: 1,
@@ -100,127 +53,280 @@ export default function BannerForm({ match, location }: IProps) {
       pagesize: 100,
       web: 1,
     });
-    // const list = await axios.get(
-    //   'https://dncapi.moveft.com/api/coin/web-coinrank?page=1&type=-1&pagesize=100&webp=1',
-    // );
     if (res.code == 200) {
       setPriceList(res.data);
     }
   };
   const onFinish = async (e: any) => {
-    console.log(e);
+    setLoading({
+      ...loading,
+      finishLoading: true,
+    });
+    const finishData = {
+      ...formValue,
+      ...e,
+      game_image: imageUrl,
+      additional_game_summary: richText,
+      download_links: linksListValue,
+      game_media: mediaList,
+    };
+    console.log({
+      ...finishData,
+      mediaList,
+    });
+
+    try {
+      const data = isUpdated
+        ? await editGLOverviewItem({
+            ...finishData,
+            action: 2,
+          })
+        : await addGLOverviewItem({
+            ...finishData,
+            action: 0,
+          });
+      console.log(data);
+      if (data.code == 1) {
+        message.success('Success!');
+      }
+    } catch (error) {}
+    setLoading({
+      ...loading,
+      finishLoading: false,
+    });
+  };
+  const getList = async () => {
+    setLoading({
+      ...loading,
+      categoriesListLoding: true,
+    });
+    const { data } = await getCategoryList({});
+    setCategoryList(data);
+    setLoading({
+      ...loading,
+      categoriesListLoding: false,
+    });
+  };
+  const addValue = () => {
+    let _obj = {};
+    _obj[modalValue.name] = modalValue.url;
+    if (modalValue.type == 0) {
+      setFormValue({
+        ...(formValue as IGame),
+        official_links: {
+          ...formValue?.official_links,
+          ..._obj,
+        },
+      });
+    } else {
+      setFormValue({
+        ...(formValue as IGame),
+        additional_media: {
+          ...formValue?.additional_media,
+          ..._obj,
+        },
+      });
+    }
+    initModalValue();
+  };
+  const initModalValue = (isopen = false, modalType = 0) => {
+    setModalValue({
+      visiable: isopen,
+      type: modalType,
+      name: '',
+      url: '',
+    });
   };
   useEffect(() => {
+    if (isUpdated) {
+      setFormValue(glInfo);
+      setMediaList(glInfo?.game_media);
+    } else {
+      setFormValue(undefined);
+      setMediaList([]);
+    }
+    console.log(glInfo);
+  }, [glInfo]);
+  useEffect(() => {
+    getList();
     getPrice();
+    // return setFormValue(undefined);
   }, []);
   return (
     <ContentCard>
       <ContentHeader
-        label={isUpdated ? `Updated a Game Listing:  ${bname}` : 'Create a Game Listing'}
+        label={isUpdated ? `Updated a Game Listing:  ${glid}` : 'Create a Game Listing'}
       />
       <div>
-        <Form
-          labelCol={{ span: 4 }}
-          wrapperCol={{ span: 12 }}
-          labelAlign="left"
-          onFinish={onFinish}
-        >
-          <Form.Item required label="Game Name" name="bname">
-            <Input placeholder="please Iinput your Game name"></Input>
-          </Form.Item>
-          <Form.Item required label="Game Image" name="image">
-            <Upload
-              listType="picture-card"
-              className="avatar-uploader"
-              showUploadList={false}
-              action="https://www.mocky.io/v2/5cc8019d300000980a055e76"
-              beforeUpload={beforeUpload}
-              onChange={handleChange}
-            >
-              {imageUrl ? (
-                <img src={imageUrl} alt="avatar" style={{ width: '100%' }} />
-              ) : (
-                uploadButton
-              )}
-            </Upload>
-          </Form.Item>
-          <Form.Item required label="Game Description" name={'gamedes'}>
-            <Input.TextArea />
-          </Form.Item>
-          <Form.Item required label="Blockchain" name={'chainlist'}>
-            <Select
-            // options={chainValueList}
-            >
-              {chainValueList.map((item: IChainValue, index: number) => {
-                return (
-                  <Select.Option key={item.id}>
-                    <div className="flex justify-between">
-                      <Avatar size={24} src={item.imageUrl} />
-                      <p color={item.color}>{item.slug}</p>
-                    </div>
-                  </Select.Option>
-                );
-              })}
-            </Select>
-          </Form.Item>
-          <Form.Item required label="Game Category" name={'gamecate'}>
-            <Select>
-              {categoriesList.map((item: ICategories, index: number) => {
-                return (
-                  <Select.Option key={item.id} value={item.id}>
-                    <p>{item.name}</p>
-                  </Select.Option>
-                );
-              })}
-            </Select>
-          </Form.Item>
-          <Form.Item required label="Media">
-            <Media list={mediaList} setList={setMediaList} />
-          </Form.Item>
-          <Form.Item required label="Official Links">
-            <div>
-              <OfficialLinks list={officialLinksList} setList={setOfficialLinksList} />
-              <Button type="primary">Add</Button>
-            </div>
-          </Form.Item>
-          <Form.Item required label="Additional Media">
-            <OfficialLinks list={addMediaList} setList={setAddMediaList} />
-          </Form.Item>
-          <Form.Item required label="Additional Game Summary">
-            <ContentEditor html={richText} setHtml={setRichText} />
-          </Form.Item>
-          <Form.Item required label="Token Ticker" name={'token'}>
-            {/* <TokenTicker /> */}
-            <Select mode="multiple">
-              {priceList?.map((item: any, index) => {
-                return (
-                  <Select.Option value={item.name} key={item.code}>
-                    <div className="flex justify-between">
-                      <p>
-                        <Avatar src={item.logo} className="mr-4" size={16} />
-                        <span>{item.name}</span>
-                      </p>
-                      <p>{item.current_price_usd}USDT</p>
-                    </div>
-                  </Select.Option>
-                );
-              })}
-            </Select>
-          </Form.Item>
-          <Form.Item required label="Download Links">
-            <OfficialLinks list={dowloadLinks} setList={setDownloadList} />
-          </Form.Item>
-          <Form.Item required label="URL" name="url">
-            <Input placeholder="URL"></Input>
-          </Form.Item>
-          <Form.Item>
-            <Button onClick={history.goBack}>Cancel</Button>
-            <Button htmlType="submit" type="primary" className="ml-8">
-              Save
-            </Button>
-          </Form.Item>
-        </Form>
+        {(!isUpdated || formValue) && (
+          <Form
+            initialValues={formValue}
+            labelCol={{ span: 4 }}
+            wrapperCol={{ span: 12 }}
+            labelAlign="left"
+            onFinish={onFinish}
+          >
+            <Form.Item required label="Game Name" name="game_name">
+              <Input placeholder="please Iinput your Game name"></Input>
+            </Form.Item>
+            <Form.Item required label="Game Image" name="game_image">
+              <FileUpload
+                onSuccess={(e: string) => {
+                  setImageUrl(e);
+                }}
+              />
+            </Form.Item>
+            <Form.Item required label="Game Description" name={'game_description'}>
+              <Input.TextArea />
+            </Form.Item>
+            <Form.Item required label="Blockchain" name={'game_blockchain'}>
+              <Select mode="multiple">
+                {priceList?.map((item: any, index) => {
+                  return (
+                    <Select.Option value={item.code} key={item.code}>
+                      <div className="">
+                        <p>
+                          <Avatar src={item.logo} className="mr-4" size={16} />
+                          <span>{item.code}</span>
+                        </p>
+                      </div>
+                    </Select.Option>
+                  );
+                })}
+              </Select>
+            </Form.Item>
+            <Form.Item required label="Game Category" name={'game_category'}>
+              <Select mode="multiple" loading={loading.categoriesListLoding}>
+                {categoryList.map((item: ICategories, index: number) => {
+                  return (
+                    <Select.Option key={item.name} value={item.name}>
+                      <p>{item.name}</p>
+                    </Select.Option>
+                  );
+                })}
+              </Select>
+            </Form.Item>
+            <Form.Item required label="Media">
+              <Media list={mediaList as IMedia[]} setList={setMediaList} />
+            </Form.Item>
+            <Form.Item required label="Official Links">
+              <div>
+                <OfficialLinks
+                  _list={formValue ? formValue.official_links : []}
+                  _setList={(e: any) =>
+                    setFormValue({
+                      ...(formValue as IGame),
+                      official_links: e,
+                    })
+                  }
+                />
+                <Button
+                  onClick={() => {
+                    initModalValue(true, 0);
+                  }}
+                  type="primary"
+                >
+                  Add
+                </Button>
+              </div>
+            </Form.Item>
+            <Form.Item required label="Additional Media">
+              <div>
+                <OfficialLinks
+                  _list={formValue ? formValue.additional_media : {}}
+                  _setList={(e: any) =>
+                    setFormValue({
+                      ...(formValue as IGame),
+                      additional_media: e,
+                    })
+                  }
+                />
+                <Button
+                  onClick={() => {
+                    initModalValue(true, 1);
+                  }}
+                  type="primary"
+                >
+                  Add
+                </Button>
+              </div>
+            </Form.Item>
+            <Form.Item required label="Additional Game Summary">
+              <ContentEditor html={richText} setHtml={setRichText} />
+            </Form.Item>
+            <Form.Item required label="Token Ticker" name={'token_ticker'}>
+              {/* <TokenTicker /> */}
+              <Select mode="multiple">
+                {priceList?.map((item: any, index) => {
+                  return (
+                    <Select.Option value={item.name} key={item.code}>
+                      <div className="flex justify-between">
+                        <p>
+                          <Avatar src={item.logo} className="mr-4" size={16} />
+                          <span>{item.name}</span>
+                        </p>
+                        <p>{item.current_price_usd}USDT</p>
+                      </div>
+                    </Select.Option>
+                  );
+                })}
+              </Select>
+            </Form.Item>
+            <Form.Item required label="Download Links">
+              <OfficialLinks
+                _list={linksListValue}
+                _setList={(e: any) => {
+                  console.log(e);
+                  setLinksListValue({
+                    ...linksListValue,
+                    ...e,
+                  });
+                }}
+              />
+            </Form.Item>
+            <Form.Item required label="URL" name="url">
+              <Input placeholder="URL"></Input>
+            </Form.Item>
+            <Form.Item>
+              <Button onClick={history.goBack}>Cancel</Button>
+              <Button
+                loading={loading.finishLoading}
+                htmlType="submit"
+                type="primary"
+                className="ml-8"
+              >
+                Save
+              </Button>
+            </Form.Item>
+          </Form>
+        )}
       </div>
+      <Modal open={modalValue.visiable} onOk={addValue} onCancel={() => initModalValue()}>
+        <div>
+          <p>name:</p>
+          <Input
+            value={modalValue.name}
+            onChange={(e) =>
+              setModalValue({
+                ...modalValue,
+                name: e.target.value,
+              })
+            }
+          />
+        </div>
+        <div>
+          <p>url:</p>
+          <Input
+            value={modalValue.url}
+            onChange={(e) =>
+              setModalValue({
+                ...modalValue,
+                url: e.target.value,
+              })
+            }
+          />
+        </div>
+      </Modal>
     </ContentCard>
   );
 }

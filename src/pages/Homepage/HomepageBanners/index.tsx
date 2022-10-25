@@ -9,6 +9,7 @@ import { timestampToTime } from '@/utils/format';
 import IconFont from '@/components/IconFont';
 import ContentCard from '@/components/ContentCard';
 import { history } from 'umi';
+import { getHPBannerList } from '@/service/homepage';
 export default function HomepageBanners() {
   const [searchValue, setSearchValue] = useState({});
   const [list, setList] = useState<IBanners[]>();
@@ -121,7 +122,8 @@ export default function HomepageBanners() {
   ];
   const getList = async () => {
     setLoading({ ...loading, tableLoading: true });
-    setList(bannerValue);
+    const { data } = await getHPBannerList({});
+    setList(data);
     setLoading({ ...loading, tableLoading: false });
   };
   const onEnable = async (a: boolean, e: IBanners, index: number) => {
