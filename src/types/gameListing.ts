@@ -4,7 +4,7 @@ export interface IGame {
   surl?: string;
   game_blockchain?: number[];
   status?: number;
-  editStatus?: number;
+  editstatus?: number;
   operator?: string;
   lastEditedDate: string;
   gamedes?: string;
@@ -12,6 +12,7 @@ export interface IGame {
   download_links?: any;
   additional_media?: any;
   game_media?: any;
+  draft: IGameDraft;
 }
 export interface IMedia {
   name: string;
@@ -19,6 +20,13 @@ export interface IMedia {
   url: string;
   enable: number;
   rank: number;
+}
+export interface IGameDraft {
+  game_name: string;
+  game_image: string;
+  game_blockchain: string[];
+  game_category: string[];
+  game_media: IMedia[];
 }
 export interface ICategories {
   name: string;

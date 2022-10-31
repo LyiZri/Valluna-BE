@@ -1,19 +1,27 @@
 import { IFormItem } from '@/types/form';
-import { searchStatusData } from '@/types/user';
-import { Button, Form, Input, Select, Tag, Avatar } from 'antd';
+import { searchFeaturedData, searchStatusData } from '@/types/user';
+import { Button, Form, Input, Select, Tag, Avatar, FormInstance } from 'antd';
 import React from 'react';
 import IconFont from '@/components/IconFont/index';
 import { RedoOutlined, SearchOutlined } from '@ant-design/icons';
-import { chainValueList } from '@/types/chainType';
 import { IChainValue } from '../../types/chainType';
+import { IGame } from '@/types/gameListing';
+import { useEffect } from 'react';
+import { useState } from 'react';
+import { getGLOverviewList } from '@/service/gamelistings';
 interface IProps {
   search: Function;
   searchItem: IFormItem[];
   className?: string;
+  form?: FormInstance<any>;
 }
 
 export default function SearchBar(props: IProps) {
-  const [form] = Form.useForm();
+  const form = props.form ? props.form : Form.useForm()[0];
+  const [loading, setLoading] = useState({
+    gameListLoading: false,
+  });
+  const [gameList, setGameList] = useState<IGame[]>([]);
   const tagRender = (props: any) => {
     const { label, value, color, closable, onClose } = props;
 
@@ -33,6 +41,21 @@ export default function SearchBar(props: IProps) {
       </Tag>
     );
   };
+  const getGameList = async () => {
+    setLoading({
+      ...loading,
+      gameListLoading: true,
+    });
+    const { data } = await getGLOverviewList({});
+    setGameList(data);
+    setLoading({
+      ...loading,
+      gameListLoading: false,
+    });
+  };
+  useEffect(() => {
+    getGameList();
+  }, []);
   return (
     <div className={`search-bar ${props.className}`}>
       <Form
@@ -71,7 +94,7 @@ export default function SearchBar(props: IProps) {
                   ></Select>
                 </Form.Item>
               );
-            } else if (item.type == 'chain-groups') {
+            } else if (item.type == 'featured-groups') {
               return (
                 <Form.Item
                   key={item.name}
@@ -83,20 +106,69 @@ export default function SearchBar(props: IProps) {
                     placeholder={item.placeholder}
                     className="mr-4 rounded-lg !w-32"
                     tagRender={tagRender}
+                    options={searchFeaturedData}
+                  ></Select>
+                </Form.Item>
+              );
+            } else if (item.type == 'game-groups') {
+              return (
+                <Form.Item
+                  key={item.name}
+                  name={item.name}
+                  label={item.label}
+                  rules={[{ required: item.require }]}
+                >
+                  <Select
+                    className="mr-4 rounded-lg !w-32 rounded-xl"
+                    placeholder={item?.placeholder}
+                    loading={loading.gameListLoading}
+                  >
+                    {gameList.map((item: IGame, index: number) => {
+                      if (item.status == 0) return;
+                      if (item.editstatus == 0 && item.draft.game_name) {
+                        return (
+                          <Select.Option key={item.glid} value={item.glid}>
+                            <p>{item.draft.game_name}</p>
+                          </Select.Option>
+                        );
+                      } else {
+                        return (
+                          <Select.Option key={item.game_name} value={item.glid}>
+                            <p>{item.game_name}</p>
+                          </Select.Option>
+                        );
+                      }
+                    })}
+                  </Select>
+                </Form.Item>
+              );
+            } else if (item.type == 'chain-groups') {
+              return (
+                <Form.Item
+                  key={item.name}
+                  name={item.name}
+                  label={item.label}
+                  rules={[{ required: item.require }]}
+                >
+                  ChainGrops
+                  {/* <Select
+                    placeholder={item.placeholder}
+                    className="mr-4 rounded-lg !w-32"
+                    tagRender={tagRender}
                     size="large"
                     // options={chainValueList}
                   >
                     {chainValueList.map((item: IChainValue, index: number) => {
                       return (
-                        <Select.Option key={item.id}>
+                        <Select.Option key={item.blid}>
                           <div className="flex justify-between">
-                            <Avatar size={24} src={item.imageUrl} />
+                            <Avatar size={24} src={item.img_url} />
                             <p color={item.color}>{item.slug}</p>
                           </div>
                         </Select.Option>
                       );
                     })}
-                  </Select>
+                  </Select> */}
                 </Form.Item>
               );
             }

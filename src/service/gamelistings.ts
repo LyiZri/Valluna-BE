@@ -56,6 +56,13 @@ export const editCategoryItem = async (data: any) => {
     data: requestDataWrap(data),
   });
 };
+export const delCategoryItem = async (data: any) => {
+  return request('/api/gamelistings/deletecategory', {
+    method: 'post',
+    requestType: 'form',
+    data: requestDataWrap(data),
+  });
+};
 
 export const addGLBlockChainItem = async (data: any) => {
   return request('/api/gamelistings/addblockchain', {
@@ -66,6 +73,13 @@ export const addGLBlockChainItem = async (data: any) => {
 };
 export const editGLBlockChainItem = async (data: any) => {
   return request('/api/gamelistings/editblockchain', {
+    method: 'post',
+    requestType: 'form',
+    data: requestDataWrap(data),
+  });
+};
+export const delGLBlockChainItem = async (data: any) => {
+  return request('/api/gamelistings/deleteblockchain', {
     method: 'post',
     requestType: 'form',
     data: requestDataWrap(data),

@@ -12,6 +12,7 @@ import ContentForm from '@/components/ContentForm';
 import { useForm } from 'antd/lib/form/Form';
 import { ICategories } from '@/types/gameListing';
 import { addCategoryItem, editCategoryItem, getCategoryList } from '@/service/gamelistings';
+import { delCategoryItem } from '../../../service/gamelistings';
 
 export default function Categories() {
   const [loading, setLoading] = useState({
@@ -128,9 +129,13 @@ export default function Categories() {
     });
   };
   const onDelete = async (record: ICategories, index: number) => {
-    const _list = list?.concat([]);
-    _list?.splice(index, 1);
-    setList(_list);
+    const res = await delCategoryItem({ name: record.name });
+    if (res.code == 1) {
+      message.success('Sucess');
+      const _list = list?.concat([]);
+      _list?.splice(index, 1);
+      setList(_list);
+    }
   };
   const onCreate = async () => {
     setModalStatus({

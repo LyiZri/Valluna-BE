@@ -87,7 +87,17 @@
   {
     path: '/articels',
     name: 'Articles',
-    component: './Articles',
+    routes: [
+      {
+        path: '/articels/overview',
+        component: './Articles',
+        name: 'Articels',
+      },
+      {
+        path: '/articels/airticle-form',
+        component: './Articles/AirticleForm',
+      },
+    ],
   },
   {
     path: '/',

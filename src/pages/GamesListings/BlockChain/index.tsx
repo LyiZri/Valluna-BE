@@ -13,6 +13,7 @@ import ContentForm from '@/components/ContentForm';
 import { useForm } from 'antd/lib/form/Form';
 import {
   addGLBlockChainItem,
+  delGLBlockChainItem,
   editGLBlockChainItem,
   getGLBlockChainList,
 } from '@/service/gamelistings';
@@ -133,9 +134,13 @@ export default function BlockChain() {
     });
   };
   const onDelete = async (record: IChainValue, index: number) => {
-    const _list = list?.concat([]);
-    _list?.splice(index, 1);
-    setList(_list);
+    const res = await delGLBlockChainItem({ blid: record.blid });
+    if (res.code == 1) {
+      message.success('Sucess');
+      const _list = list?.concat([]);
+      _list?.splice(index, 1);
+      setList(_list);
+    }
   };
   const onCreate = async () => {
     setModalData({

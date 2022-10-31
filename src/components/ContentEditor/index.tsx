@@ -12,14 +12,6 @@ export default function ContentEditor({ html, setHtml }: IProps) {
   // editor 实例
   const [editor, setEditor] = useState<IDomEditor | null>(null);
   i18nChangeLanguage('en');
-  // 编辑器内容
-
-  // 模拟 ajax 请求，异步设置 html
-  useEffect(() => {
-    setTimeout(() => {
-      setHtml('<p>hello world</p>');
-    }, 1500);
-  }, []);
 
   // 工具栏配置
   const toolbarConfig: Partial<IToolbarConfig> = {};

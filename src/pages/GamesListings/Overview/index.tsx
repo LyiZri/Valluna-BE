@@ -10,7 +10,11 @@ import ContentCard from '@/components/ContentCard';
 import { history, useModel } from 'umi';
 import { IGame } from '@/types/gameListing';
 import { LoadingOutlined } from '@ant-design/icons';
-import { deleteGLOverviewItem, getGLOverviewList } from '@/service/gamelistings';
+import {
+  deleteGLOverviewItem,
+  getGLOverviewList,
+  editGLOverviewItem,
+} from '@/service/gamelistings';
 export default function GameListing() {
   const [searchValue, setSearchValue] = useState({});
   const [list, setList] = useState<IGame[]>();
@@ -31,11 +35,11 @@ export default function GameListing() {
       col: 3,
       placeholder: 'Game Name',
     },
-    {
-      name: 'chain',
-      type: 'chain-groups',
-      placeholder: 'Chain',
-    },
+    // {
+    //   name: 'chain',
+    //   type: 'chain-groups',
+    //   placeholder: 'Chain',
+    // },
     {
       name: '',
       type: 'link-reset',
@@ -140,10 +144,10 @@ export default function GameListing() {
     },
     {
       title: 'Edit Status',
-      dataIndex: 'editStatus',
-      key: 'editStatus',
-      render: (_, { editStatus }) => {
-        if (editStatus == 0) {
+      dataIndex: 'editstatus',
+      key: 'editstatus',
+      render: (_, { editstatus }) => {
+        if (editstatus == 0) {
           return <Tag>Unpublished Changes</Tag>;
         } else {
           return <Tag>Up to Date</Tag>;
@@ -207,7 +211,7 @@ export default function GameListing() {
       _list.push({
         glid: item.glid,
         // game_name: item.draft.game_name,
-        surl: item.draft.official_links.website,
+        surl: item?.draft?.official_links?.website,
         // game_blockchain: item.draft.game_blockchain,
         status: item.status,
         operator: item.operator,
@@ -224,15 +228,15 @@ export default function GameListing() {
   };
 
   //change Public Status
-  const onPublishStatusChange = (status = 0, statusArr = [-1]) => {
+  const onPublishStatusChange = async (status = 0, statusArr = [-1]) => {
     setLoading({
       ...loading,
       tableLoading: true,
       changePublishLoading: true,
     });
+    console.log({ status, statusArr });
     const _list = (list as IGame[]).concat([]);
     if (statusArr[0] == -1 && statusArr.length == 1) {
-      console.log(selectedRowKeys);
       const isStatusUnify = selectedRowKeys.every((item: React.Key, _) => {
         return _list[(item as number) - 1].status == status;
       });
@@ -242,7 +246,16 @@ export default function GameListing() {
         });
       }
     } else {
-      statusArr.map((item: number, _) => {
+      statusArr.map(async (item: number, _) => {
+        console.log({
+          ..._list[item],
+          action: status == 0 ? 2 : 0,
+        });
+
+        const data = await editGLOverviewItem({
+          ..._list[item],
+          action: status == 0 ? 2 : 0,
+        });
         _list[item].status = Number(!status);
       });
     }

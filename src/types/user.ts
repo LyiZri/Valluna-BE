@@ -53,11 +53,21 @@ export const rolesTableData: IManage[] = [
 ];
 export const searchStatusData = [
   {
-    value: 'enables',
-    label: 'Enabled',
+    value: 1,
+    label: 'unpublished changes ',
   },
   {
-    value: 'disabled',
-    label: 'Disabled',
+    value: 2,
+    label: 'up to date',
+  },
+];
+export const searchFeaturedData = [
+  {
+    value: 0,
+    label: 'No Featured',
+  },
+  {
+    value: 1,
+    label: 'Featured',
   },
 ];
