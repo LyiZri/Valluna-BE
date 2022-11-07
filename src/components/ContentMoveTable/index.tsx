@@ -7,11 +7,15 @@ import React, { useState } from 'react';
 import type { SortableContainerProps, SortEnd } from 'react-sortable-hoc';
 import { SortableContainer, SortableElement, SortableHandle } from 'react-sortable-hoc';
 import { useEffect } from 'react';
+import { ProProvider } from '@ant-design/pro-components';
 
-interface IProps {
-  columns: ColumnsType<IMedia>;
-  list: IMedia[];
-  key?: string;
+interface IProps<T> {
+  columns: ColumnsType<T>;
+  list: T[];
+  setList: Function;
+  rowkey?: string;
+  order?: string;
+  loading?: boolean;
 }
 const DragHandle: any = SortableHandle(() => (
   <MenuOutlined style={{ cursor: 'grab', color: '#999' }} />
@@ -24,8 +28,15 @@ const SortableBody: any = SortableContainer(
   (props: React.HTMLAttributes<HTMLTableSectionElement>) => <tbody {...props} />,
 );
 
-const ContentMoveTable = ({ columns, list, key = 'name' }: IProps) => {
-  const [dataSource, setDataSource] = useState(list);
+const ContentMoveTable = ({
+  columns,
+  list,
+  setList,
+  order = 'rank',
+  rowkey = 'name',
+  loading = false,
+}: IProps<any>) => {
+  // const [list, setList] = useState(list);
   columns.unshift({
     title: 'Sort',
     dataIndex: 'sort',
@@ -35,11 +46,9 @@ const ContentMoveTable = ({ columns, list, key = 'name' }: IProps) => {
   });
   const onSortEnd = ({ oldIndex, newIndex }: SortEnd) => {
     if (oldIndex !== newIndex) {
-      const newData = arrayMoveImmutable(dataSource.slice(), oldIndex, newIndex).filter(
-        (el: IMedia) => !!el,
-      );
+      const newData = arrayMoveImmutable(list.slice(), oldIndex, newIndex).filter((el) => !!el);
       console.log('Sorted items: ', newData);
-      setDataSource(newData);
+      setList(newData);
     }
   };
 
@@ -55,19 +64,20 @@ const ContentMoveTable = ({ columns, list, key = 'name' }: IProps) => {
 
   const DraggableBodyRow: React.FC<any> = ({ className, style, ...restProps }) => {
     // function findIndex base on Table rowKey props and should always be a right array index
-    const index = dataSource.findIndex((x) => x.rank === restProps['list-row-key']);
+    const index = list.findIndex((x) => x[order] === restProps['data-row-key']);
     return <SortableItem index={index} {...restProps} />;
   };
   useEffect(() => {
-    setDataSource(list);
+    setList(list);
     console.log(list);
   }, [list]);
   return (
     <Table
+      loading={loading}
       pagination={false}
-      dataSource={dataSource}
+      dataSource={list}
       columns={columns}
-      rowKey={key}
+      rowKey={rowkey}
       components={{
         body: {
           wrapper: DraggableContainer,

@@ -1,12 +1,23 @@
-﻿export default [
+﻿import { IRoute } from 'umi';
+export default <IRoute[]>[
+  {
+    path: '/',
+    redirect: '/account',
+  },
   {
     path: '/user',
     layout: false,
     routes: [
       {
+        path: '/user',
+        redirect: '/user/login',
+        // wrappers: ['@/wrappers/loginAuth'],
+      },
+      {
         name: 'login',
         path: '/user/login',
         component: './user/Login',
+        // wrappers: ['@/wrappers/loginAuth'],
       },
       {
         component: './404',
@@ -16,17 +27,20 @@
   {
     path: '/account',
     name: ' Account',
+    exact: false,
     // component: './Account',
     routes: [
       {
-        path: '/account/all-accounts',
-        name: 'All Accounts',
-        component: './Accounts/AllAccounts',
+        path: '/account',
+        redirect: '/account/all-accounts',
+        wrappers: ['@/wrappers/defaultAuth'],
       },
       {
         path: '/account/user-access-controls',
         name: 'User Access Controls',
-        component: './Accounts/UserAccessControls',
+        exact: false,
+        component: '@/pages/Accounts/UserAccessControls',
+        wrappers: ['@/wrappers/defaultAuth'],
       },
       {
         path: '/account/role-form',
@@ -91,7 +105,7 @@
       {
         path: '/articels/overview',
         component: './Articles',
-        name: 'Articels',
+        name: 'OverView',
       },
       {
         path: '/articels/airticle-form',

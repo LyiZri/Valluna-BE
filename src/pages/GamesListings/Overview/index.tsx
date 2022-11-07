@@ -1,10 +1,10 @@
 import SearchBar from '@/components/SearchBar';
 import { IFormItem } from '@/types/form';
-import { Button, Image, Space, Switch, Table, Avatar, Tag, message } from 'antd';
+import { Button, Image, Space, Switch, Table, Avatar, Tag, message, Select } from 'antd';
 import { useState } from 'react';
 import { useEffect } from 'react';
 import { ColumnsType } from 'antd/lib/table';
-import { timestampToTime } from '@/utils/format';
+import { getSearchList, timestampToTime } from '@/utils/format';
 import IconFont from '@/components/IconFont';
 import ContentCard from '@/components/ContentCard';
 import { history, useModel } from 'umi';
@@ -15,6 +15,8 @@ import {
   getGLOverviewList,
   editGLOverviewItem,
 } from '@/service/gamelistings';
+import { getRandomColor } from '@/utils';
+import { useUserAuth } from '@/utils/user';
 export default function GameListing() {
   const [searchValue, setSearchValue] = useState({});
   const [list, setList] = useState<IGame[]>();
@@ -24,6 +26,7 @@ export default function GameListing() {
     changePublishLoading: false,
   });
   const { setGlInfo } = useModel('glInfo');
+  const haveAuth = useUserAuth('Gamelistings');
   const rowSelection = {
     selectedRowKeys,
     onChange: setSelectedRowKeys,
@@ -35,11 +38,68 @@ export default function GameListing() {
       col: 3,
       placeholder: 'Game Name',
     },
-    // {
-    //   name: 'chain',
-    //   type: 'chain-groups',
-    //   placeholder: 'Chain',
-    // },
+    {
+      name: 'chain',
+      type: 'chain-groups',
+      placeholder: 'Chain',
+    },
+    {
+      name: '',
+      type: 'left',
+      render: (
+        <Select
+          placeholder="Edit Status"
+          onChange={(e) =>
+            setSearchValue({
+              ...searchValue,
+              editstatus: e,
+            })
+          }
+        >
+          <Select.Option value={0}>No Edit</Select.Option>
+          <Select.Option value={1}>Unpublish Change</Select.Option>
+          <Select.Option value={2}>Up to Date</Select.Option>
+        </Select>
+      ),
+    },
+    {
+      name: '',
+      type: 'left',
+      render: (
+        <Select
+          className="mx-4"
+          placeholder="Game Status"
+          onChange={(e) =>
+            setSearchValue({
+              ...searchValue,
+              status: e,
+            })
+          }
+        >
+          <Select.Option value={0}>Published</Select.Option>
+          <Select.Option value={1}>Draft</Select.Option>
+        </Select>
+      ),
+    },
+    {
+      name: '',
+      type: 'left',
+      render: (
+        <Select
+          className="mx-4"
+          placeholder="Featured"
+          onChange={(e) =>
+            setSearchValue({
+              ...searchValue,
+              featured: e,
+            })
+          }
+        >
+          <Select.Option value={0}>False</Select.Option>
+          <Select.Option value={1}>True</Select.Option>
+        </Select>
+      ),
+    },
     {
       name: '',
       type: 'link-reset',
@@ -57,42 +117,42 @@ export default function GameListing() {
       type: 'col',
       col: 3,
     },
-    {
-      name: '',
-      type: '',
-      col: 3,
-      render: (
-        <Button type="primary" className="mr-4" onClick={() => onPushBanner()}>
-          Create New Banner
-        </Button>
-      ),
-    },
-    {
-      name: '',
-      type: '',
-      col: 3,
-      render: (
-        <Button type="primary" className="mr-4" onClick={() => onPublishStatusChange(0)}>
-          Unpublish
-        </Button>
-      ),
-    },
-    {
-      name: '',
-      type: '',
-      col: 3,
-      render: (
-        <Button type="primary" className="mr-4" onClick={() => onPublishStatusChange(1)}>
-          Publish
-        </Button>
-      ),
-    },
-    {
-      name: '',
-      type: '',
-      col: 3,
-      render: <Button type="primary">Change Order</Button>,
-    },
+    haveAuth
+      ? {
+          name: '',
+          type: '',
+          col: 3,
+          render: (
+            <Button type="primary" className="mr-4" onClick={() => onPushBanner()}>
+              Create New Banner
+            </Button>
+          ),
+        }
+      : {},
+    haveAuth
+      ? {
+          name: '',
+          type: '',
+          col: 3,
+          render: (
+            <Button type="primary" className="mr-4" onClick={() => onPublishStatusChange(0)}>
+              Unpublish
+            </Button>
+          ),
+        }
+      : {},
+    haveAuth
+      ? {
+          name: '',
+          type: '',
+          col: 3,
+          render: (
+            <Button type="primary" className="mr-4" onClick={() => onPublishStatusChange(1)}>
+              Publish
+            </Button>
+          ),
+        }
+      : {},
   ];
   const colums: ColumnsType<IGame> = [
     {
@@ -103,33 +163,30 @@ export default function GameListing() {
     {
       title: 'Site URL',
       dataIndex: 'surl',
-      key: 'srul',
+      key: 'surl',
+      render: (_, { surl }) => {
+        return (
+          <Button type="link" onClick={() => surl && window.open(surl)}>
+            {surl || '---'}
+          </Button>
+        );
+      },
     },
     {
       title: 'Chain',
       dataIndex: 'game_blockchain',
       key: 'game_blockchain',
       render: (_, { game_blockchain }) => {
-        // return (
-        //   <Avatar.Group>
-        //     {game_blockchain?.map((item: number, index: number) => {
-        //       const chainValue = getChainValue(item);
-        //       if (index < 2 || (index == 2 && game_blockchain.length == 3)) {
-        //         return <Avatar src={chainValue.imageUrl} key={chainValue.id} size={24} />;
-        //       } else if (index == 2 && game_blockchain.length > 3) {
-        //         return (
-        //           <Avatar key={chainValue.id} size={24}>
-        //             +{game_blockchain.length - 2}
-        //           </Avatar>
-        //         );
-        //       } else {
-        //         return;
-        //       }
-        //     })}
-        //   </Avatar.Group>
-        // );
+        return (
+          <Tag color="purple">
+            {game_blockchain !== undefined && game_blockchain?.length > 0
+              ? game_blockchain[0]
+              : '-'}
+          </Tag>
+        );
       },
     },
+    Table.EXPAND_COLUMN,
     {
       title: 'Status',
       dataIndex: 'status',
@@ -167,40 +224,42 @@ export default function GameListing() {
         return <p>{timestampToTime(lastEditedDate)}</p>;
       },
     },
-    {
-      title: 'Action',
-      key: 'action',
-      width: 180,
-      render: (_, record, index) => (
-        <Space size="middle">
-          {loading.changePublishLoading ? (
-            <LoadingOutlined />
-          ) : (
-            <IconFont
-              type={record.status == 1 ? 'icon-unsee' : 'icon-see'}
-              className="text-black text-xl cursor-pointer"
-              onClick={() => onPublishStatusChange(record.status, [index])}
-            />
-          )}
-          <IconFont
-            type="icon-bianji"
-            onClick={() => {
-              onPushBanner(record.glid, index);
-            }}
-            className="text-black text-xl cursor-pointer"
-          />
-          <IconFont
-            type="icon-delete"
-            onClick={() => onDelete(record.glid as string, index)}
-            className="text-black text-xl cursor-pointer"
-          />
-        </Space>
-      ),
-    },
+    haveAuth
+      ? {
+          title: 'Action',
+          key: 'action',
+          width: 180,
+          render: (_, record, index) => (
+            <Space size="middle">
+              {loading.changePublishLoading ? (
+                <LoadingOutlined />
+              ) : (
+                <IconFont
+                  type={record.status == 1 ? 'icon-unsee' : 'icon-see'}
+                  className="text-black text-xl cursor-pointer"
+                  onClick={() => onPublishStatusChange(record.status, [index])}
+                />
+              )}
+              <IconFont
+                type="icon-bianji"
+                onClick={() => {
+                  onPushBanner(record.glid, index);
+                }}
+                className="text-black text-xl cursor-pointer"
+              />
+              <IconFont
+                type="icon-delete"
+                onClick={() => onDelete(record.glid as string, index)}
+                className="text-black text-xl cursor-pointer"
+              />
+            </Space>
+          ),
+        }
+      : {},
   ];
-  const getList = async () => {
+  const getList = async (e = {}) => {
     setLoading({ ...loading, tableLoading: true });
-    const res = await getGLOverviewList({ page: 1, size: 10 });
+    const res = await getGLOverviewList({ ...e, ...searchValue });
 
     let _list: IGame[] = [];
     if (res.code != 1) {
@@ -210,19 +269,17 @@ export default function GameListing() {
     res.data.map((item: any, index: number) => {
       _list.push({
         glid: item.glid,
-        // game_name: item.draft.game_name,
-        surl: item?.draft?.official_links?.website,
-        // game_blockchain: item.draft.game_blockchain,
+        game_name: item.game_name,
+        surl: item?.official_links?.website,
+        game_blockchain: item.game_blockchain,
         status: item.status,
         operator: item.operator,
         lastEditedDate: item.time,
         ...item.draft,
       });
     });
-    console.log(_list);
-
-    // debugger;
     setList(_list);
+    console.log(_list);
 
     setLoading({ ...loading, tableLoading: false });
   };
@@ -234,8 +291,7 @@ export default function GameListing() {
       tableLoading: true,
       changePublishLoading: true,
     });
-    console.log({ status, statusArr });
-    const _list = (list as IGame[]).concat([]);
+    const _list = list ? (list as IGame[]).concat([]) : [];
     if (statusArr[0] == -1 && statusArr.length == 1) {
       const isStatusUnify = selectedRowKeys.every((item: React.Key, _) => {
         return _list[(item as number) - 1].status == status;
@@ -247,14 +303,9 @@ export default function GameListing() {
       }
     } else {
       statusArr.map(async (item: number, _) => {
-        console.log({
-          ..._list[item],
-          action: status == 0 ? 2 : 0,
-        });
-
         const data = await editGLOverviewItem({
           ..._list[item],
-          action: status == 0 ? 2 : 0,
+          action: status == 0 ? 2 : 3,
         });
         _list[item].status = Number(!status);
       });
@@ -265,6 +316,7 @@ export default function GameListing() {
       tableLoading: false,
       changePublishLoading: false,
     });
+    await getList();
   };
   const onDelete = async (glid: string, index: number) => {
     setLoading({
@@ -273,7 +325,7 @@ export default function GameListing() {
     });
     const res = await deleteGLOverviewItem({ glid });
     if (res.code == 0) {
-      const _list = list?.concat([]);
+      const _list = list ? list?.concat([]) : [];
       _list?.splice(index, 1);
       setList(_list);
     } else {
@@ -284,15 +336,17 @@ export default function GameListing() {
     });
   };
   const onPushBanner = (glid?: string, index = 0) => {
-    console.log(index);
-
-    index != undefined && setGlInfo((list as IGame[])[index]);
+    index != undefined && setGlInfo(list![index]);
     glid
       ? history.push(`/games-listings/game-listings-form?glid=${glid}`)
       : history.push('/games-listings/game-listings-form');
   };
-  const onSearch = (e: any) => {
-    setSearchValue(e);
+  const onSearch = async (e: any) => {
+    const searchOBJ = {
+      ...e,
+      ...searchValue,
+    };
+    await getList(searchOBJ);
   };
   useEffect(() => {
     getList();
@@ -301,12 +355,9 @@ export default function GameListing() {
     <div className="p-8">
       <section>
         <div className="text-2xl font-semibold w-full text-left pb-4 border-b border-gray-500">
-          Homepage Banner
+          Game Listing Overview
         </div>
-        <p className="text-md">
-          Create and set the display order for Banners on the homepage. Maximum X banners can be
-          enabled to be displayed on the site
-        </p>
+        <p className="text-md">Create and manage game listings for display on the website</p>
       </section>
       <section>
         <ContentCard>
@@ -314,6 +365,19 @@ export default function GameListing() {
           <Table
             rowSelection={rowSelection}
             rowKey={'glid'}
+            expandable={{
+              expandedRowRender: (record) => (
+                <p style={{ margin: 0 }}>
+                  {record.game_blockchain?.map((item: string, index: number) => {
+                    return (
+                      <Tag color={getRandomColor()} key={index}>
+                        {item}
+                      </Tag>
+                    );
+                  })}
+                </p>
+              ),
+            }}
             loading={loading.tableLoading}
             columns={colums}
             dataSource={list}

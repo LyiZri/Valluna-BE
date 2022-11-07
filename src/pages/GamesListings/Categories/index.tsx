@@ -2,7 +2,7 @@ import ContentCard from '@/components/ContentCard';
 import IconFont from '@/components/IconFont';
 import SearchBar from '@/components/SearchBar';
 import { IFormItem } from '@/types/form';
-import { timestampToTime } from '@/utils/format';
+import { getSearchList, timestampToTime } from '@/utils/format';
 import { LoadingOutlined } from '@ant-design/icons';
 import { Avatar, Space, Table, Modal, Input, Button, message } from 'antd';
 import { ColumnsType } from 'antd/lib/table';
@@ -13,6 +13,7 @@ import { useForm } from 'antd/lib/form/Form';
 import { ICategories } from '@/types/gameListing';
 import { addCategoryItem, editCategoryItem, getCategoryList } from '@/service/gamelistings';
 import { delCategoryItem } from '../../../service/gamelistings';
+import { useUserAuth } from '@/utils/user';
 
 export default function Categories() {
   const [loading, setLoading] = useState({
@@ -28,6 +29,7 @@ export default function Categories() {
     index: 0,
   });
   const [list, setList] = useState<ICategories[]>();
+  const haveAuth = useUserAuth('Gamelistings');
   const searchItem: IFormItem[] = [
     {
       name: 'name',
@@ -72,31 +74,33 @@ export default function Categories() {
       dataIndex: 'operator',
       key: 'operator',
     },
-    {
-      title: 'Action',
-      key: 'action',
-      width: 180,
-      render: (_, record, index) => (
-        <Space size="middle">
-          <IconFont
-            type="icon-bianji"
-            onClick={() => {
-              onEdit(record, index);
-            }}
-            className="text-black text-xl cursor-pointer"
-          />
-          {loading.deleteLoading ? (
-            <LoadingOutlined />
-          ) : (
-            <IconFont
-              type="icon-delete"
-              onClick={() => onDelete(record, index)}
-              className="text-black text-xl cursor-pointer"
-            />
-          )}
-        </Space>
-      ),
-    },
+    haveAuth
+      ? {
+          title: 'Action',
+          key: 'action',
+          width: 180,
+          render: (_, record, index) => (
+            <Space size="middle">
+              <IconFont
+                type="icon-bianji"
+                onClick={() => {
+                  onEdit(record, index);
+                }}
+                className="text-black text-xl cursor-pointer"
+              />
+              {loading.deleteLoading ? (
+                <LoadingOutlined />
+              ) : (
+                <IconFont
+                  type="icon-delete"
+                  onClick={() => onDelete(record, index)}
+                  className="text-black text-xl cursor-pointer"
+                />
+              )}
+            </Space>
+          ),
+        }
+      : {},
   ];
   const chainForm = [
     {
@@ -132,7 +136,7 @@ export default function Categories() {
     const res = await delCategoryItem({ name: record.name });
     if (res.code == 1) {
       message.success('Sucess');
-      const _list = list?.concat([]);
+      const _list = list ? list?.concat([]) : [];
       _list?.splice(index, 1);
       setList(_list);
     }
@@ -145,7 +149,7 @@ export default function Categories() {
     });
   };
   const onSaveForm = async (e: any) => {
-    const _list = list?.concat([]);
+    const _list = list ? list?.concat([]) : [];
     const nameCheck = _list?.some((item, index) => {
       return item.name == e.name;
     });
@@ -173,7 +177,12 @@ export default function Categories() {
     });
   };
   const onSearch = async (e: any) => {
-    console.log(e);
+    if (e) {
+      const _list = getSearchList(e, list);
+      setList(_list);
+    } else {
+      await getList();
+    }
   };
   const onCancel = () => {
     setModalStatus({
@@ -199,9 +208,11 @@ export default function Categories() {
         <ContentCard>
           <div className="flex justify-between">
             <SearchBar className={'mb-4'} searchItem={searchItem} search={onSearch} />
-            <Button onClick={onCreate} type="primary">
-              Create New
-            </Button>
+            {haveAuth && (
+              <Button onClick={onCreate} type="primary">
+                Create New
+              </Button>
+            )}
           </div>
           <Table
             rowKey={'name'}

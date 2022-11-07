@@ -2,7 +2,7 @@ export interface IGame {
   glid?: string;
   game_name?: string;
   surl?: string;
-  game_blockchain?: number[];
+  game_blockchain?: string[];
   status?: number;
   editstatus?: number;
   operator?: string;

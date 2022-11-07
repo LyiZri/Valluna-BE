@@ -3,7 +3,7 @@ import IconFont from '@/components/IconFont';
 import SearchBar from '@/components/SearchBar';
 import { IChainValue } from '@/types/chainType';
 import { IFormItem } from '@/types/form';
-import { timestampToTime } from '@/utils/format';
+import { getSearchList, timestampToTime } from '@/utils/format';
 import { LoadingOutlined } from '@ant-design/icons';
 import { Avatar, Space, Table, Modal, Input, Button, message } from 'antd';
 import { ColumnsType } from 'antd/lib/table';
@@ -19,6 +19,7 @@ import {
 } from '@/service/gamelistings';
 import FileUpload from '@/components/FileUpload';
 import { Form } from 'antd';
+import { useUserAuth } from '@/utils/user';
 
 export default function BlockChain() {
   const [loading, setLoading] = useState({
@@ -26,6 +27,7 @@ export default function BlockChain() {
     deleteLoading: false,
   });
   const [form] = useForm();
+  const haveAuth = useUserAuth('Gamelistings');
   const [modalData, setModalData] = useState({
     visiable: false,
     isEdit: false,
@@ -86,38 +88,40 @@ export default function BlockChain() {
       dataIndex: 'operator',
       key: 'operator',
     },
-    {
-      title: 'Action',
-      key: 'action',
-      width: 180,
-      render: (_, record, index) => (
-        <Space size="middle">
-          <IconFont
-            type="icon-bianji"
-            onClick={() => {
-              onEdit(record, index);
-            }}
-            className="text-black text-xl cursor-pointer"
-          />
-          {loading.deleteLoading ? (
-            <LoadingOutlined />
-          ) : (
-            <IconFont
-              type="icon-delete"
-              onClick={() => onDelete(record, index)}
-              className="text-black text-xl cursor-pointer"
-            />
-          )}
-        </Space>
-      ),
-    },
+    haveAuth
+      ? {
+          title: 'Action',
+          key: 'action',
+          width: 180,
+          render: (_, record, index) => (
+            <Space size="middle">
+              <IconFont
+                type="icon-bianji"
+                onClick={() => {
+                  onEdit(record, index);
+                }}
+                className="text-black text-xl cursor-pointer"
+              />
+              {loading.deleteLoading ? (
+                <LoadingOutlined />
+              ) : (
+                <IconFont
+                  type="icon-delete"
+                  onClick={() => onDelete(record, index)}
+                  className="text-black text-xl cursor-pointer"
+                />
+              )}
+            </Space>
+          ),
+        }
+      : {},
   ];
-  const getList = async () => {
+  const getList = async (searchValue = {}) => {
     setLoading({
       ...loading,
       tableLoading: true,
     });
-    const { data } = await getGLBlockChainList({});
+    const { data } = await getGLBlockChainList({ ...searchValue });
     setList(data);
     setLoading({
       ...loading,
@@ -137,7 +141,7 @@ export default function BlockChain() {
     const res = await delGLBlockChainItem({ blid: record.blid });
     if (res.code == 1) {
       message.success('Sucess');
-      const _list = list?.concat([]);
+      const _list = list ? list?.concat([]) : [];
       _list?.splice(index, 1);
       setList(_list);
     }
@@ -150,8 +154,7 @@ export default function BlockChain() {
     });
   };
   const onSaveForm = async (e: any) => {
-    console.log(e);
-    let _list = list?.concat([]);
+    let _list = list ? list?.concat([]) : [];
     if (modalData.isEdit) {
       const res = await editGLBlockChainItem({
         ...modalData,
@@ -186,7 +189,12 @@ export default function BlockChain() {
     onCancel();
   };
   const onSearch = async (e: any) => {
-    console.log(e);
+    if (e) {
+      const _list = getSearchList(e, list);
+      setList(_list);
+    } else {
+      await getList(e);
+    }
   };
   const onCancel = () => {
     form.resetFields();
@@ -214,9 +222,11 @@ export default function BlockChain() {
         <ContentCard>
           <div className="flex justify-between">
             <SearchBar className={'mb-4'} searchItem={searchItem} search={onSearch} />
-            <Button onClick={onCreate} type="primary">
-              Create New
-            </Button>
+            {haveAuth && (
+              <Button onClick={onCreate} type="primary">
+                Create New
+              </Button>
+            )}
           </div>
           <Table
             rowKey={'blid'}

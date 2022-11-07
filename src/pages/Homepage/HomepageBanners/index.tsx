@@ -1,32 +1,38 @@
 import SearchBar from '@/components/SearchBar';
 import { IFormItem } from '@/types/form';
-import { Button, Image, Space, Switch, Table } from 'antd';
+import { Button, Image, Space, Switch, Table, message } from 'antd';
 import { useState } from 'react';
-import { bannerValue, IBanners } from '../../../types/homepage';
+import { IBanners } from '../../../types/homepage';
 import { useEffect } from 'react';
 import { ColumnsType } from 'antd/lib/table';
 import { timestampToTime } from '@/utils/format';
 import IconFont from '@/components/IconFont';
 import ContentCard from '@/components/ContentCard';
-import { history } from 'umi';
-import { getHPBannerList } from '@/service/homepage';
+import { history, useModel } from 'umi';
+import { deleteHPBannerList, getHPBannerList, editHPBannerList } from '@/service/homepage';
+import { LoadingOutlined } from '@ant-design/icons';
+import ContentMoveTable from '@/components/ContentMoveTable';
+import { useUserAuth } from '@/utils/user';
 export default function HomepageBanners() {
-  const [searchValue, setSearchValue] = useState({});
   const [list, setList] = useState<IBanners[]>();
   const [loading, setLoading] = useState({
     tableLoading: false,
+    deleteLoading: false,
+    deleteIndex: -1,
   });
+  const haveAuth = useUserAuth('Homepage');
+  const { setBannerInfo } = useModel('bannerInfo');
   const searchItem: IFormItem[] = [
     {
-      name: 'bname',
+      name: 'banner_name',
       type: 'input',
       col: 3,
       placeholder: 'Banner Name',
     },
     {
-      name: 'status',
-      type: 'status-groups',
-      placeholder: 'Status',
+      name: 'enable',
+      type: 'enable-groups',
+      placeholder: 'Enable Status',
     },
     {
       name: '',
@@ -45,99 +51,159 @@ export default function HomepageBanners() {
       type: 'col',
       col: 3,
     },
-    {
-      name: '',
-      type: '',
-      col: 3,
-      render: (
-        <Button type="primary" className="mr-4" onClick={() => onPushBanner()}>
-          Create New Banner
-        </Button>
-      ),
-    },
-    {
-      name: '',
-      type: '',
-      col: 3,
-      render: <Button type="primary">Change Order</Button>,
-    },
+    haveAuth
+      ? {
+          name: '',
+          type: '',
+          col: 3,
+          render: (
+            <Button type="primary" className="mr-4" onClick={() => onPushBanner()}>
+              Create New Banner
+            </Button>
+          ),
+        }
+      : {},
+    haveAuth
+      ? {
+          name: '',
+          type: '',
+          col: 3,
+          render: (
+            <Button onClick={() => onChangeOrder()} type="primary">
+              Change Order
+            </Button>
+          ),
+        }
+      : {},
   ];
   const colums: ColumnsType<IBanners> = [
     {
       title: 'Banner Name',
-      dataIndex: 'bname',
-      key: 'bname',
+      dataIndex: 'name',
+      key: 'name',
     },
     {
       title: 'Image Preview',
       dataIndex: 'image',
       key: 'image',
-      render: (_, { image }) => <Image src={image} width={200} height={50} />,
+      render: (_, { file }) => <Image src={file} width={200} height={50} />,
     },
     {
       title: 'URL',
       dataIndex: 'url',
       key: 'url',
+      render: (_, { url }) => {
+        return (
+          <Button type="link" onClick={() => window.open(url)}>
+            {url}
+          </Button>
+        );
+      },
     },
     {
       title: 'Enable',
       dataIndex: 'enable',
       key: 'enable',
       render: (a, record, index) => (
-        <Switch checked={record.enable} onChange={() => onEnable(a, record, index)}></Switch>
+        <Switch
+          checked={record.enable === 1}
+          disabled={!haveAuth}
+          onChange={() => onEnable(a, record, index)}
+        ></Switch>
       ),
     },
     {
       title: 'Creation Date',
-      dataIndex: 'creationdate',
-      key: 'creationdate',
-      render: (_, { creationdate }) => <p>{timestampToTime(creationdate as string)}</p>,
+      dataIndex: 'optime',
+      key: 'optime',
+      render: (_, { optime }) => <p>{timestampToTime(optime as string)}</p>,
     },
     {
       title: 'Operator',
       dataIndex: 'operator',
       key: 'operator',
     },
-    {
-      title: 'Action',
-      key: 'action',
-      width: 180,
-      render: (_, record) => (
-        <Space size="middle">
-          <IconFont
-            type="icon-bianji"
-            onClick={() => {
-              onPushBanner(record.bname);
-            }}
-            className="text-black text-xl cursor-pointer"
-          />
-          <IconFont
-            type="icon-delete"
-            onClick={() => {}}
-            className="text-black text-xl cursor-pointer"
-          />
-        </Space>
-      ),
-    },
+    haveAuth
+      ? {
+          title: 'Action',
+          key: 'action',
+          width: 180,
+          render: (_, record, index) => (
+            <Space size="middle">
+              <IconFont
+                type="icon-bianji"
+                onClick={() => {
+                  onPushBanner(record);
+                }}
+                className="text-black text-xl cursor-pointer"
+              />
+              {loading.deleteLoading && loading.deleteIndex == index ? (
+                <LoadingOutlined />
+              ) : (
+                <IconFont
+                  type="icon-delete"
+                  onClick={() => {
+                    onDelete(record.bid, index);
+                  }}
+                  className="text-black text-xl cursor-pointer"
+                />
+              )}
+            </Space>
+          ),
+        }
+      : {},
   ];
-  const getList = async () => {
+  const getList = async (searchValue = {}) => {
     setLoading({ ...loading, tableLoading: true });
-    const { data } = await getHPBannerList({});
+    const { data } = await getHPBannerList({ ...searchValue });
     setList(data);
     setLoading({ ...loading, tableLoading: false });
   };
   const onEnable = async (a: boolean, e: IBanners, index: number) => {
-    const listCopy: IBanners[] = (list as IBanners[]).concat([]);
-    listCopy[index].enable = !listCopy[index].enable;
+    const listCopy: IBanners[] = list ? (list as IBanners[]).concat([]) : [];
+    listCopy[index].enable = Number(!Boolean(listCopy[index].enable));
     setList(listCopy);
   };
-  const onPushBanner = (bname?: string) => {
-    bname
-      ? history.push(`/homepage/banner-form?bname=${bname}`)
+  const onPushBanner = (record?: IBanners) => {
+    record ? setBannerInfo(record) : setBannerInfo(undefined);
+    record
+      ? history.push(`/homepage/banner-form?bid=${record.bid}`)
       : history.push('/homepage/banner-form');
   };
-  const onSearch = (e: any) => {
-    setSearchValue(e);
+  const onSearch = async (e: any) => {
+    await getList(e);
+  };
+  const onChangeOrder = async () => {
+    list?.map(async (item, index) => {
+      if (item.order == index) {
+        return;
+      } else {
+        await editHPBannerList({
+          ...list[index],
+          order: index,
+        });
+      }
+    });
+    message.success('Change Success');
+  };
+  const onDelete = async (bid: number, index: number) => {
+    setLoading({
+      ...loading,
+      deleteLoading: true,
+      deleteIndex: index,
+    });
+    const _list = list ? list?.concat([]) : [];
+    const { code } = await deleteHPBannerList({ bid });
+    if (code == 1) {
+      _list?.splice(index, 1);
+      setList(_list);
+      message.success('Success Deleted');
+    }
+    setLoading({
+      ...loading,
+      deleteLoading: false,
+      deleteIndex: -1,
+    });
   };
   useEffect(() => {
     getList();
@@ -156,11 +222,13 @@ export default function HomepageBanners() {
       <section>
         <ContentCard>
           <SearchBar className={'mb-4'} searchItem={searchItem} search={onSearch} />
-          <Table
-            rowKey={'bname'}
+          <ContentMoveTable
             loading={loading.tableLoading}
+            order="bid"
+            setList={setList}
             columns={colums}
-            dataSource={list}
+            rowkey="bid"
+            list={list ? list : []}
           />
         </ContentCard>
       </section>

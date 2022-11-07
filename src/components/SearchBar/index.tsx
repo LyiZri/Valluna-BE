@@ -6,9 +6,10 @@ import IconFont from '@/components/IconFont/index';
 import { RedoOutlined, SearchOutlined } from '@ant-design/icons';
 import { IChainValue } from '../../types/chainType';
 import { IGame } from '@/types/gameListing';
-import { useEffect } from 'react';
+import { useEffect, useCallback } from 'react';
 import { useState } from 'react';
 import { getGLOverviewList } from '@/service/gamelistings';
+import { getGLBlockChainList } from '../../service/gamelistings';
 interface IProps {
   search: Function;
   searchItem: IFormItem[];
@@ -20,8 +21,10 @@ export default function SearchBar(props: IProps) {
   const form = props.form ? props.form : Form.useForm()[0];
   const [loading, setLoading] = useState({
     gameListLoading: false,
+    chainListLoading: false,
   });
   const [gameList, setGameList] = useState<IGame[]>([]);
+  const [chainList, setChainlist] = useState<IChainValue[]>([]);
   const tagRender = (props: any) => {
     const { label, value, color, closable, onClose } = props;
 
@@ -53,8 +56,24 @@ export default function SearchBar(props: IProps) {
       gameListLoading: false,
     });
   };
+  const getChainList = async () => {
+    setLoading({
+      ...loading,
+      chainListLoading: true,
+    });
+    const { data } = await getGLBlockChainList({});
+    setChainlist(data);
+    setLoading({
+      ...loading,
+      chainListLoading: false,
+    });
+  };
+  const checkShouldGetValue = (type: string): Boolean => {
+    return props.searchItem.some((item) => item.type == type);
+  };
   useEffect(() => {
-    getGameList();
+    checkShouldGetValue('game-groups') && getGameList();
+    checkShouldGetValue('chain-groups') && getChainList();
   }, []);
   return (
     <div className={`search-bar ${props.className}`}>
@@ -150,25 +169,49 @@ export default function SearchBar(props: IProps) {
                   label={item.label}
                   rules={[{ required: item.require }]}
                 >
-                  ChainGrops
-                  {/* <Select
-                    placeholder={item.placeholder}
-                    className="mr-4 rounded-lg !w-32"
-                    tagRender={tagRender}
-                    size="large"
-                    // options={chainValueList}
+                  <Select
+                    className="mr-4 rounded-lg !w-32 rounded-xl"
+                    placeholder={item?.placeholder}
+                    loading={loading.gameListLoading}
                   >
-                    {chainValueList.map((item: IChainValue, index: number) => {
+                    {chainList.map((item: IChainValue, index: number) => {
                       return (
-                        <Select.Option key={item.blid}>
-                          <div className="flex justify-between">
-                            <Avatar size={24} src={item.img_url} />
-                            <p color={item.color}>{item.slug}</p>
-                          </div>
+                        <Select.Option key={item.blid} value={item.name}>
+                          <p>{item.name}</p>
                         </Select.Option>
                       );
                     })}
-                  </Select> */}
+                  </Select>
+                </Form.Item>
+              );
+            } else if (item.type == 'enable-groups') {
+              return (
+                <Form.Item
+                  key={item.name}
+                  name={item.name}
+                  label={item.label}
+                  rules={[{ required: item.require }]}
+                >
+                  <Select
+                    className="mr-4 rounded-lg !w-32 rounded-xl"
+                    placeholder={item?.placeholder}
+                    loading={loading.gameListLoading}
+                  >
+                    <Select.Option value={1}>Enable</Select.Option>
+                    <Select.Option value={0}>UnEnable</Select.Option>
+                  </Select>
+                </Form.Item>
+              );
+            } else if (item.render && item.type == 'left') {
+              return (
+                <Form.Item
+                  key={index}
+                  name={item.name}
+                  label={item.label}
+                  className={'text-white ml-4'}
+                  rules={[{ required: item.require }]}
+                >
+                  <div className="mr-4">{item.render}</div>
                 </Form.Item>
               );
             }
@@ -205,13 +248,13 @@ export default function SearchBar(props: IProps) {
                   </div>
                 </Button>
               );
-            } else if (item.render) {
+            } else if (item.render && item.type != 'left') {
               return (
                 <Form.Item
                   key={index}
                   name={item.name}
                   label={item.label}
-                  className={'text-white'}
+                  className={'text-white mr-4'}
                   rules={[{ required: item.require }]}
                 >
                   {item.render}

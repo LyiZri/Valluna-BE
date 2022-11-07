@@ -1,6 +1,6 @@
 import SearchBar from '@/components/SearchBar';
 import { IFormItem } from '@/types/form';
-import { Button, Image, Select, Space, Switch, Table, Tabs, Tag } from 'antd';
+import { Button, Space, Switch, Table, Tabs, Tag } from 'antd';
 import { useState } from 'react';
 
 import { useEffect } from 'react';
@@ -9,17 +9,15 @@ import { timestampToTime } from '@/utils/format';
 import IconFont from '@/components/IconFont';
 import ContentCard from '@/components/ContentCard';
 import { history, useModel } from 'umi';
-import { getHPBannerList } from '@/service/homepage';
-import { IArticles, IArticlesDraft } from '@/types/articles';
+import { IArticles } from '@/types/articles';
 import {
   getArticlesList,
   editArticlesList,
   deleteArticlesList,
   changeArticlesListPublish,
 } from '@/service/articles';
-import { IGame } from '@/types/gameListing';
-import { getGLOverviewList } from '@/service/gamelistings';
 import { useForm } from 'antd/lib/form/Form';
+import { expiredAuth, useUserAuth } from '@/utils/user';
 interface ISearch {
   article_title?: string;
   glid?: string;
@@ -30,8 +28,11 @@ interface ISearch {
 export default function HomepageBanners() {
   let searchValue: ISearch = {
     article_title: '',
-    game: '',
+    glid: '',
   };
+  const haveAuth = useUserAuth('Accounts');
+  console.log('auth======', haveAuth);
+
   // const { gameInfo } = useModel('gameList');
   const { setAtInfo } = useModel('atInfo');
   const [list, setList] = useState<IArticles[]>([]);
@@ -85,46 +86,64 @@ export default function HomepageBanners() {
       type: 'col',
       col: 3,
     },
-    {
-      name: '',
-      type: '',
-      col: 3,
-      render: (
-        <Button type="primary" onClick={() => onPublishStatusChange(3)}>
-          Unpublish
-        </Button>
-      ),
-    },
-    {
-      name: '',
-      type: '',
-      col: 3,
-      render: (
-        <Button type="primary" onClick={() => onPublishStatusChange(2)}>
-          Publish
-        </Button>
-      ),
-    },
-    {
-      name: '',
-      type: '',
-      col: 3,
-      render: (
-        <Button type="primary" onClick={() => onDelete()}>
-          Delete
-        </Button>
-      ),
-    },
-    {
-      name: '',
-      type: '',
-      col: 3,
-      render: (
-        <Button type="primary" className="mr-4" onClick={() => onPushBanner()}>
-          Create New Banner
-        </Button>
-      ),
-    },
+    haveAuth
+      ? {
+          name: '',
+          type: '',
+          col: 3,
+          render: (
+            <Button
+              type="primary"
+              onClick={() => (haveAuth ? onPublishStatusChange(3) : expiredAuth())}
+            >
+              Unpublish
+            </Button>
+          ),
+        }
+      : {},
+    haveAuth
+      ? {
+          name: '',
+          type: '',
+          col: 3,
+          render: (
+            <Button
+              type="primary"
+              onClick={() => (haveAuth ? onPublishStatusChange(2) : expiredAuth())}
+            >
+              Publish
+            </Button>
+          ),
+        }
+      : {},
+    haveAuth
+      ? {
+          name: '',
+          type: '',
+          col: 3,
+          render: (
+            <Button type="primary" onClick={() => (haveAuth ? onDelete() : expiredAuth())}>
+              Delete
+            </Button>
+          ),
+        }
+      : {},
+    haveAuth
+      ? {
+          name: '',
+          type: '',
+          col: 3,
+          render: (
+            <Button
+              type="primary"
+              className="mr-4"
+              onClick={() => (haveAuth ? onPushBanner() : expiredAuth())}
+            >
+              Create New +
+            </Button>
+          ),
+        }
+      : {},
   ];
   const colums: ColumnsType<IArticles> = [
     {
@@ -240,29 +259,31 @@ export default function HomepageBanners() {
       key: 'optime',
       render: (_, { optime }) => <p>{timestampToTime(optime)}</p>,
     },
-    {
-      title: 'Action',
-      key: 'action',
-      width: 180,
-      render: (_, record, index) => (
-        <Space size="middle">
-          <IconFont
-            type="icon-bianji"
-            onClick={() => {
-              onPushBanner(record.atid, index);
-            }}
-            className="text-black text-xl cursor-pointer"
-          />
-          <IconFont
-            type="icon-delete"
-            onClick={() => {
-              onDelete(index);
-            }}
-            className="text-black text-xl cursor-pointer"
-          />
-        </Space>
-      ),
-    },
+    haveAuth
+      ? {
+          title: 'Action',
+          key: 'action',
+          width: 180,
+          render: (_, record, index) => (
+            <Space size="middle">
+              <IconFont
+                type="icon-bianji"
+                onClick={() => {
+                  haveAuth ? onPushBanner(record.atid, index) : expiredAuth();
+                }}
+                className="text-black text-xl cursor-pointer"
+              />
+              <IconFont
+                type="icon-delete"
+                onClick={() => {
+                  haveAuth ? onDelete(index) : expiredAuth();
+                }}
+                className={`text-black text-xl cursor-pointer `}
+              />
+            </Space>
+          ),
+        }
+      : {},
   ];
   const getList = async () => {
     setLoading({ ...loading, tableLoading: true });
@@ -271,7 +292,7 @@ export default function HomepageBanners() {
     setLoading({ ...loading, tableLoading: false });
   };
   const onEnable = async (a: boolean, index: number) => {
-    const listCopy: IArticles[] = (list as IArticles[]).concat([]);
+    const listCopy: IArticles[] = list ? (list as IArticles[]).concat([]) : [];
     listCopy[index].featured = Number(!Boolean(listCopy[index].featured));
     let _games: string[] = [];
     listCopy[index].games?.map((item: any, index) => {
@@ -344,7 +365,7 @@ export default function HomepageBanners() {
     searchValue = {
       ...searchValue,
       ...e,
-      game: e.glid,
+      game: e?.glid,
     };
     await getList();
   };
@@ -355,12 +376,9 @@ export default function HomepageBanners() {
     <div className="p-8">
       <section>
         <div className="text-2xl font-semibold w-full text-left pb-4 border-b border-gray-500">
-          Homepage Banner
+          Articles Overview
         </div>
-        <p className="text-md">
-          Create and set the display order for Banners on the homepage. Maximum X banners can be
-          enabled to be displayed on the site
-        </p>
+        <p className="text-md">Create and manage articles</p>
       </section>
       <section>
         <ContentCard>

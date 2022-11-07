@@ -58,6 +58,12 @@ export default function BannerForm({ match, location }: IProps) {
     }
   };
   const onFinish = async (e: any) => {
+    console.log(mediaList);
+    let _mediaList = mediaList ? mediaList.concat([]) : [];
+    _mediaList?.map((item: IMedia, index: number) => {
+      item.rank = index + 1;
+    });
+
     setLoading({
       ...loading,
       finishLoading: true,
@@ -68,13 +74,8 @@ export default function BannerForm({ match, location }: IProps) {
       game_image: imageUrl,
       additional_game_summary: richText,
       download_links: linksListValue,
-      game_media: mediaList,
+      game_media: _mediaList,
     };
-    console.log({
-      ...finishData,
-      mediaList,
-    });
-
     try {
       const data = isUpdated
         ? await editGLOverviewItem({
@@ -85,7 +86,6 @@ export default function BannerForm({ match, location }: IProps) {
             ...finishData,
             action: 0,
           });
-      console.log(data);
       if (data.code == 1) {
         message.success('Success!');
       }
@@ -145,7 +145,6 @@ export default function BannerForm({ match, location }: IProps) {
       setFormValue(undefined);
       setMediaList([]);
     }
-    console.log(glInfo);
   }, [glInfo]);
   useEffect(() => {
     getList();
@@ -276,7 +275,6 @@ export default function BannerForm({ match, location }: IProps) {
               <OfficialLinks
                 _list={linksListValue}
                 _setList={(e: any) => {
-                  console.log(e);
                   setLinksListValue({
                     ...linksListValue,
                     ...e,

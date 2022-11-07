@@ -169,6 +169,7 @@ export default function BannerForm({ match, location }: IProps) {
                       </Select.Option>
                     );
                   } else {
+                    console.log('item============', { item, gameDefalutList });
                     return (
                       <Select.Option key={item.game_name} value={item.glid}>
                         <p>{item.game_name}</p>

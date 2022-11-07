@@ -1,25 +1,31 @@
-import ContentForm from '@/components/ContentForm';
 import IconFont from '@/components/IconFont';
-import { IFormItem } from '@/types/form';
-import { IUsers, rolesData, tableData } from '@/types/user';
+import { IManage, IRoles, IUsers } from '@/types/user';
 
-import { Button, Modal, Space, Table, Tag } from 'antd';
+import { Button, Form, Input, Modal, Select, Space, Table, Tag, message } from 'antd';
 import { useForm } from 'antd/lib/form/Form';
 import { ColumnsType } from 'antd/lib/table';
 import { useEffect, useState } from 'react';
 import ContentCard from '@/components/ContentCard';
+import { stringToMd5 } from '@/utils';
+import {
+  createAccountItem,
+  deleteAccountItem,
+  editAccountItem,
+  getAccountList,
+  getRolesList,
+} from '@/service/account';
+import { useUserAuth } from '@/utils/user';
 
-interface IProps {
-  openModal: Function;
-}
-let editorId = 0;
+let editorId = -1;
 export default function userTable() {
-  const [userlist, setUserList] = useState<IUsers[]>();
+  const [userlist, setUserList] = useState<IUsers[]>([]);
+  const [roleList, setRoleList] = useState<IManage[]>([]);
   const [form] = useForm();
+  const haveAuth = useUserAuth('Accounts');
+  const [userRoleSelectList, setUserRoleSelectList] = useState<number[]>();
   const [modelValue, setModalValue] = useState({
     title: <></>,
     open: false,
-    content: <></>,
     okText: '',
     isDelete: false,
   });
@@ -27,10 +33,6 @@ export default function userTable() {
   const [loading, setLoading] = useState({
     listLoading: false,
     confirmLoading: false,
-  });
-  const [pageData, setPageData] = useState({
-    size: 10,
-    amount: 10,
   });
   /**
    *
@@ -46,20 +48,17 @@ export default function userTable() {
             <b>Add a New User</b>
           </p>
         ),
-        content: (
-          <ContentForm
-            form={form}
-            initialValues={undefined}
-            formItem={permissionModalFormItem}
-            onFinish={onAdd}
-          />
-        ),
         okText: 'Save',
         isDelete: false,
       });
     } else if (type == 1) {
       form.setFieldsValue(userValue);
-      editorId = userValue?.id as number;
+      const _roleList: number[] = [];
+      userValue?.roles?.map((item, index) => {
+        _roleList.push(Number(item.role_id));
+      });
+      setUserRoleSelectList(_roleList);
+      editorId = userValue?.aid as number;
       setModalValue({
         ...modelValue,
         open: true,
@@ -69,18 +68,11 @@ export default function userTable() {
             {userValue?.email}
           </p>
         ),
-        content: (
-          <>
-            <ContentForm form={form} formItem={permissionModalFormItem} onFinish={onEditor} />
-          </>
-        ),
         okText: 'Save',
         isDelete: false,
       });
     } else {
-      editorId = userValue?.id as number;
-      console.log('id=====', editorId, userValue);
-
+      editorId = userValue?.aid as number;
       setModalValue({
         ...modelValue,
         open: true,
@@ -90,59 +82,73 @@ export default function userTable() {
             {userValue?.email}
           </p>
         ),
-        content: (
-          <p>
-            Are you sure you wish to delete this user? They will no longer be able to access the
-            portal
-          </p>
-        ),
         okText: 'Delete',
         isDelete: true,
       });
     }
   };
-  const onEditor = (e: IUsers) => {
+  const onEditor = async (e: IUsers) => {
     setLoading({
       ...loading,
       confirmLoading: true,
     });
-    //临时
-    setTimeout(() => {
-      console.log(e);
+    if (checkNameFormat(e.email as string)) {
+      message.warning('The email already exists');
       setLoading({
         ...loading,
         confirmLoading: false,
       });
-      let listCopy = (userlist as IUsers[]).concat([]);
-      userlist?.map((item: IUsers, index: number) => {
-        console.log({ item, e, editorId });
-        if (item.id == editorId) {
-          listCopy[index] = e;
-        }
-        setUserList(listCopy);
-      });
-      onModalCancel();
-    }, 300);
+      return;
+    }
+    await editAccountItem({ ...e, roles: userRoleSelectList, aid: editorId });
+    let listCopy = userlist ? (userlist as IUsers[]).concat([]) : [];
+    userlist?.map((item: IUsers, index: number) => {
+      console.log({ item, e, editorId });
+      if (item.aid == editorId) {
+        listCopy[index] = e;
+      }
+      setUserList(listCopy);
+    });
+    await getList();
+    setLoading({
+      ...loading,
+      confirmLoading: false,
+    });
+    onModalCancel();
   };
-  const onAdd = (e: IUsers) => {
+  const onAdd = async (e: IUsers) => {
     setLoading({
       ...loading,
       confirmLoading: true,
     });
-    //临时
-    setTimeout(() => {
+    if (checkNameFormat(e.email as string)) {
+      message.warning('The email already exists');
       setLoading({
         ...loading,
         confirmLoading: false,
       });
-      setUserList(userlist?.concat(e));
-      onModalCancel();
-    }, 300);
+      return;
+    }
+    const _password = stringToMd5(e.password as string);
+
+    const { code } = await createAccountItem({
+      ...e,
+      roles: userRoleSelectList,
+      password: _password,
+    });
+    code === 1 && setUserList(userlist?.concat(e));
+    await getList();
+    setLoading({
+      ...loading,
+      confirmLoading: false,
+    });
+    onModalCancel();
   };
   const onDelete = async () => {
+    await deleteAccountItem({ aid: editorId });
     let listCopy = userlist?.concat([]);
     listCopy?.map((item: IUsers, index: number) => {
-      if (item.id == editorId) {
+      if (item.aid == editorId) {
         listCopy?.splice(index, 1);
       }
     });
@@ -154,19 +160,34 @@ export default function userTable() {
     setModalValue({
       title: <></>,
       open: false,
-      content: <></>,
       okText: '',
       isDelete: false,
     });
+    editorId = -1;
+    setUserRoleSelectList([]);
   };
   const getList = async () => {
     setLoading({ ...loading, listLoading: true });
+
     //临时
-    setUserList(tableData);
-    setPageData({ ...pageData, amount: tableData.length });
+    const { data } = await getAccountList({});
+    const { data: roleListData } = await getRolesList({});
+    // const _data = roleListData.concat([]);
+    // _data.map((item: any, index: number) => {
+    //   item.role_id = item.rid;
+    //   item.role_name = item.name;
+    // });
+
+    setUserList(data);
+    setRoleList(roleListData);
+    // setPageData({ ...pageData, amount: tableData.length });
     setLoading({ ...loading, listLoading: false });
   };
-  const pageChange = (e: any) => {};
+  const checkNameFormat = (name: string): boolean => {
+    return userlist.some((item, index) => {
+      return item.email == name && editorId !== item.aid;
+    });
+  };
   useEffect(() => {
     getList();
   }, []);
@@ -184,7 +205,7 @@ export default function userTable() {
         <>
           {roles && roles?.length > 0 ? (
             roles.map((item) => {
-              return <Tag>{item}</Tag>;
+              return <Tag>{item.role_name}</Tag>;
             })
           ) : (
             <Tag>-</Tag>
@@ -192,76 +213,51 @@ export default function userTable() {
         </>
       ),
     },
-    {
-      title: 'Action',
-      key: 'action',
-      width: 180,
-      render: (_, record) => (
-        <Space size="middle">
-          <IconFont
-            type="icon-bianji"
-            onClick={() => {
-              openModal(1, record);
-            }}
-            className="text-black text-xl cursor-pointer"
-          />
-          <IconFont
-            type="icon-delete"
-            onClick={() => openModal(2, record)}
-            className="text-black text-xl cursor-pointer"
-          />
-        </Space>
-      ),
-    },
-  ];
-  const permissionModalFormItem: IFormItem[] = [
-    {
-      name: 'id',
-      type: '',
-    },
-    {
-      name: 'email',
-      type: 'input',
-      col: 3,
-      label: 'Email',
-      require: true,
-      placeholder: 'Please enter your Email',
-    },
-    {
-      name: 'roles',
-      type: 'select-tag',
-      label: 'Role',
-      require: true,
-      placeholder: 'Please select the permissions you want to grant',
-      selectOption: rolesData,
-    },
+    haveAuth
+      ? {
+          title: 'Action',
+          key: 'action',
+          width: 180,
+          render: (_, record) => (
+            <Space size="middle">
+              <IconFont
+                type="icon-bianji"
+                onClick={() => {
+                  openModal(1, record);
+                }}
+                className="text-black text-xl cursor-pointer"
+              />
+              <IconFont
+                type="icon-delete"
+                onClick={() => openModal(2, record)}
+                className="text-black text-xl cursor-pointer"
+              />
+            </Space>
+          ),
+        }
+      : {},
   ];
   return (
     <div>
       <ContentCard className={'m-0'}>
         <div className="flex justify-end mb-4">
-          <Button
-            shape="round"
-            type="primary"
-            onClick={() => {
-              openModal(0);
-            }}
-          >
-            Add New User +
-          </Button>
+          {haveAuth && (
+            <Button
+              shape="round"
+              type="primary"
+              onClick={() => {
+                openModal(0);
+              }}
+            >
+              Add New User +
+            </Button>
+          )}
         </div>
         <Table
           loading={loading.listLoading}
           columns={userColumns}
           dataSource={userlist}
-          rowKey={'id'}
-          pagination={{
-            pageSize: 10,
-            total: pageData.amount,
-            onChange: (e) => {
-              pageChange(e);
-            },
-          }}
+          rowKey={'rid'}
         />
       </ContentCard>
       <Modal
@@ -273,7 +269,36 @@ export default function userTable() {
         okText={modelValue.okText}
         confirmLoading={loading.confirmLoading}
       >
-        {modelValue.content}
+        {/* {modelValue.content} */}
+        {!modelValue.isDelete ? (
+          <Form
+            form={form}
+            onFinish={(e) => {
+              editorId !== -1 ? onEditor(e) : onAdd(e);
+            }}
+            labelCol={{ span: 6 }}
+          >
+            <Form.Item label="Email" name="email" key={'email'} required>
+              <Input></Input>
+            </Form.Item>
+            {editorId == -1 && (
+              <Form.Item name="password" label="Password" required>
+                <Input />
+              </Form.Item>
+            )}
+            <Form.Item label="Role" required>
+              <Select
+                value={userRoleSelectList}
+                onChange={setUserRoleSelectList}
+                mode="multiple"
+                options={roleList}
+                fieldNames={{ label: 'name', value: 'rid' }}
+              ></Select>
+            </Form.Item>
+          </Form>
+        ) : (
+          <p>Are you sure you want to delete this user?</p>
+        )}
       </Modal>
     </div>
   );

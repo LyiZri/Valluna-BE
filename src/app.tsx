@@ -1,14 +1,15 @@
 // import RightContent from '@/components/RightContent';
 // import type { Settings as LayoutSettings } from '@ant-design/pro-components';
 import { PageLoading } from '@ant-design/pro-components';
+import RightContent from '@/components/rightRender';
+
 import { message } from 'antd';
-import { RequestConfig } from 'umi';
+import { RequestConfig, useLocation } from 'umi';
 import { history } from 'umi';
-import { extend } from 'umi-request';
+import { getUserName, removeUserInfo } from './utils/user';
 export const initialStateConfig = {
   loading: <PageLoading />,
 };
-
 export const request: RequestConfig = {
   // 统一的请求设定
   timeout: 15000,
@@ -27,4 +28,17 @@ export const request: RequestConfig = {
       return response;
     },
   ],
+};
+export function getInitialState() {
+  return {
+    name: getUserName(),
+    avatar: '',
+  };
+}
+export const layout = {
+  rightRender: (initialState: any, setInitialState: any) => {
+    return (
+      <RightContent loading={false} initialState={initialState} setInitialState={setInitialState} />
+    );
+  },
 };

@@ -1,77 +1,66 @@
+import { DefaultOptionType } from 'antd/lib/cascader';
+
 export interface ICascaderOption {
   value: string | number | boolean;
   label: string;
+  disabled?: boolean;
   children?: ICascaderOption[];
 }
-export const userAccessControlsArr: ICascaderOption[] = [
-  {
-    label: 'Portal Access',
-    value: 1,
-    children: [
-      {
-        label: 'Portal Access Read',
-        value: 'read',
-      },
-      {
-        label: 'Portal Access Write',
-        value: 'write',
-      },
-    ],
-  },
+export const userAccessControlsArr: DefaultOptionType[] = [
   {
     label: 'Accounts',
-    value: 2,
-    children: [
-      {
-        label: 'Read',
-        value: 'read',
-      },
-      {
-        label: 'Write',
-        value: 'write',
-      },
-    ],
+    value: 1,
+    // children: [
+    //   {
+    //     label: 'Accounts Read',
+    //     value: 1,
+    //   },
+    //   {
+    //     label: 'Accounts Write',
+    //     value: 2,
+    //   },
+    // ],
   },
   {
     label: 'Homepage',
-    value: 3,
-    children: [
-      {
-        label: 'Read',
-        value: 'read',
-      },
-      {
-        label: 'Write',
-        value: 'write',
-      },
-    ],
+    value: 2,
+    // children: [
+    //   {
+    //     label: 'Homepage Read',
+    //     value: 1,
+    //   },
+    //   {
+    //     label: 'Homepage Write',
+    //     value: 2,
+    //   },
+    // ],
   },
   {
     label: 'Game Listings',
-    value: 4,
-    children: [
-      {
-        label: 'Read',
-        value: 'read',
-      },
-      {
-        label: 'Write',
-        value: 'write',
-      },
-    ],
+    value: 3,
+    // children: [
+    //   {
+    //     label: 'Game-Listings Read',
+    //     value: 1,
+    //   },
+    //   {
+    //     label: 'Game-Listings Write',
+    //     value: 2,
+    //   },
+    // ],
   },
   {
     label: 'Articles',
-    value: 5,
-    children: [
-      {
-        label: 'Read',
-        value: 'read',
-      },
-      {
-        label: 'Write',
-        value: 'write',
-      },
-    ],
+    value: 4,
+    // children: [
+    //   {
+    //     label: 'Articles Read',
+    //     value: 1,
+    //   },
+    //   {
+    //     label: 'Articles Write',
+    //     value: 2,
+    //   },
+    // ],
   },
 ];

@@ -5,6 +5,8 @@ import type { UploadChangeParam } from 'antd/es/upload';
 import type { RcFile, UploadFile, UploadProps } from 'antd/es/upload/interface';
 import React, { useState } from 'react';
 import { requestDataWrap } from '@/utils/request';
+import { useEffect } from 'react';
+import { useUpdateEffect } from 'ahooks';
 interface IProps {
   onSuccess: Function;
   defaultSrc?: string;
@@ -19,7 +21,7 @@ const getBase64 = (img: RcFile, callback: (url: string) => void) => {
 const beforeUpload = (file: RcFile) => {
   const isJpgOrPng = file.type === 'image/jpeg' || file.type === 'image/png';
   if (!isJpgOrPng) {
-    message.error('You can only upload JPG/PNG file!');
+    message.error('You can only upload PNG file!');
   }
   const isLt2M = file.size / 1024 / 1024 < 2;
   if (!isLt2M) {
@@ -30,8 +32,6 @@ const beforeUpload = (file: RcFile) => {
 
 const FileUpload = ({ onSuccess, defaultSrc = '' }: IProps) => {
   const [loading, setLoading] = useState(false);
-  console.log('imgurl========', defaultSrc);
-
   const [imageUrl, setImageUrl] = useState<string>(defaultSrc);
 
   const handleChange: UploadProps['onChange'] = async (info: UploadChangeParam<UploadFile>) => {
@@ -48,14 +48,15 @@ const FileUpload = ({ onSuccess, defaultSrc = '' }: IProps) => {
       });
     }
   };
-
+  useUpdateEffect(() => {
+    setImageUrl(defaultSrc);
+  }, [defaultSrc]);
   const uploadButton = (
     <div>
       {loading ? <LoadingOutlined /> : <PlusOutlined />}
       <div style={{ marginTop: 8 }}>Upload</div>
     </div>
   );
-
   return (
     <Upload
       name="file"

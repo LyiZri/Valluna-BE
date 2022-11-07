@@ -1,12 +1,12 @@
 // 全局共享数据示例
-import { IGame } from '@/types/gameListing';
 import { useState } from 'react';
+import { IManage } from '@/types/user';
 
 const useUser = () => {
-  const [glInfo, setGlInfo] = useState<IGame>();
+  const [rolesInfo, setRolesInfo] = useState<IManage>();
   return {
-    glInfo,
-    setGlInfo,
+    rolesInfo,
+    setRolesInfo,
   };
 };
 

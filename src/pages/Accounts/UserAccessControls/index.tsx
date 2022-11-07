@@ -8,7 +8,6 @@ export default function UserAccessControls() {
    * 1:user;2:manage roles
    */
   const [tabIndex, setTabIndex] = useState('1');
-
   return (
     <div className="p-8">
       <h1>User Access Controls</h1>

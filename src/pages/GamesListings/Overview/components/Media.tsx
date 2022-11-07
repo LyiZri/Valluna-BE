@@ -92,7 +92,7 @@ export default function Media({ list, setList }: IProps) {
           <IconFont
             type="icon-delete"
             onClick={() => {
-              const _list = list.concat([]);
+              const _list = list ? list.concat([]) : [];
               _list.splice(index, 1);
               setList(_list);
             }}
@@ -168,7 +168,7 @@ export default function Media({ list, setList }: IProps) {
         </Button>
       </div>
       {/* <Table /> */}
-      {list?.length && <ContentMoveTable columns={columns} list={list} />}
+      {list?.length && <ContentMoveTable setList={setList} columns={columns} list={list} />}
       <Modal
         onOk={form.submit}
         onCancel={onCancel}
