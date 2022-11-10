@@ -375,7 +375,7 @@ export default function HomepageBanners() {
   return (
     <div className="p-8">
       <section>
-        <div className="text-2xl font-semibold w-full text-left pb-4 border-b border-gray-500">
+        <div className="text-2xl font-semibold !w-full text-left pb-4 border-b border-gray-500">
           Articles Overview
         </div>
         <p className="text-md">Create and manage articles</p>
@@ -406,7 +406,7 @@ export default function HomepageBanners() {
           />
           <SearchBar
             form={searchForm}
-            className={'mb-4'}
+            className={'!mb-4'}
             searchItem={searchItem}
             search={onSearch}
           />

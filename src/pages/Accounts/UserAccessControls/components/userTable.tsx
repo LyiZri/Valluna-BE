@@ -6,7 +6,7 @@ import { useForm } from 'antd/lib/form/Form';
 import { ColumnsType } from 'antd/lib/table';
 import { useEffect, useState } from 'react';
 import ContentCard from '@/components/ContentCard';
-import { stringToMd5 } from '@/utils';
+import { getRandomColor, stringToMd5 } from '@/utils';
 import {
   createAccountItem,
   deleteAccountItem,
@@ -15,6 +15,7 @@ import {
   getRolesList,
 } from '@/service/account';
 import { useUserAuth } from '@/utils/user';
+import useModal from 'antd/lib/modal/useModal';
 
 let editorId = -1;
 export default function userTable() {
@@ -87,11 +88,24 @@ export default function userTable() {
       });
     }
   };
+  const gamilCheck = (gmail: string) => {
+    const reg = new RegExp(/^[A-Za-z0-9-_\u4e00-\u9fa5]+@gmail.com$/);
+    const a = reg.test(gmail);
+    return a;
+  };
   const onEditor = async (e: IUsers) => {
     setLoading({
       ...loading,
       confirmLoading: true,
     });
+    if (!e.email || !gamilCheck(e.email as string)) {
+      message.warning('Please use Gmail');
+      setLoading({
+        ...loading,
+        confirmLoading: false,
+      });
+      return;
+    }
     if (checkNameFormat(e.email as string)) {
       message.warning('The email already exists');
       setLoading({
@@ -121,6 +135,14 @@ export default function userTable() {
       ...loading,
       confirmLoading: true,
     });
+    if (!e.email || !gamilCheck(e.email as string)) {
+      message.warning('Please use Gmail');
+      setLoading({
+        ...loading,
+        confirmLoading: false,
+      });
+      return;
+    }
     if (checkNameFormat(e.email as string)) {
       message.warning('The email already exists');
       setLoading({
@@ -129,12 +151,12 @@ export default function userTable() {
       });
       return;
     }
-    const _password = stringToMd5(e.password as string);
+    // const _password = stringToMd5(e.password as string);
 
     const { code } = await createAccountItem({
       ...e,
       roles: userRoleSelectList,
-      password: _password,
+      // password: _password,
     });
     code === 1 && setUserList(userlist?.concat(e));
     await getList();
@@ -205,10 +227,10 @@ export default function userTable() {
         <>
           {roles && roles?.length > 0 ? (
             roles.map((item) => {
-              return <Tag>{item.role_name}</Tag>;
+              return <Tag color={getRandomColor()}>{item.role_name}</Tag>;
             })
           ) : (
-            <Tag>-</Tag>
+            <Tag color="red">-</Tag>
           )}
         </>
       ),
@@ -279,13 +301,8 @@ export default function userTable() {
             labelCol={{ span: 6 }}
           >
             <Form.Item label="Email" name="email" key={'email'} required>
-              <Input></Input>
+              <Input disabled={editorId !== -1}></Input>
             </Form.Item>
-            {editorId == -1 && (
-              <Form.Item name="password" label="Password" required>
-                <Input />
-              </Form.Item>
-            )}
             <Form.Item label="Role" required>
               <Select
                 value={userRoleSelectList}

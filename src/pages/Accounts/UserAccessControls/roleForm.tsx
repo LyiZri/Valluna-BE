@@ -60,12 +60,9 @@ export default function roleForm({ match, location }: IProps) {
   };
   //将dva中的数据进行转译
   const getFormValue = () => {
-    const _formValue = { ...rolesInfo };
-    console.log(_formValue);
-    console.log(_formValue?.modules instanceof Array);
-
+    const _formValue: any = { ...rolesInfo };
     let default_chooseValue: number[][] = [];
-    if (_formValue?.modules.length > 0 && _formValue?.modules instanceof Array) {
+    if (_formValue?.modules && _formValue?.modules instanceof Array) {
       _formValue.modules.map((item: any, index: number) => {
         if (item.module_level == 3) {
           default_chooseValue.push([item.module_id]);

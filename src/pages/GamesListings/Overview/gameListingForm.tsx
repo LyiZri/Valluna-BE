@@ -58,7 +58,6 @@ export default function BannerForm({ match, location }: IProps) {
     }
   };
   const onFinish = async (e: any) => {
-    console.log(mediaList);
     let _mediaList = mediaList ? mediaList.concat([]) : [];
     _mediaList?.map((item: IMedia, index: number) => {
       item.rank = index + 1;
@@ -110,6 +109,7 @@ export default function BannerForm({ match, location }: IProps) {
   const addValue = () => {
     let _obj = {};
     _obj[modalValue.name] = modalValue.url;
+
     if (modalValue.type == 0) {
       setFormValue({
         ...(formValue as IGame),
@@ -139,7 +139,13 @@ export default function BannerForm({ match, location }: IProps) {
   };
   useEffect(() => {
     if (isUpdated) {
-      setFormValue(glInfo);
+      setFormValue({
+        ...glInfo,
+        ...glInfo?.draft,
+      });
+      setRichText(glInfo?.draft?.additional_game_summary || glInfo?.additional_game_summary || '');
+      // console.log(glInfo?.draft?.additional_media || glInfo?.additional_media || '');
+
       setMediaList(glInfo?.game_media);
     } else {
       setFormValue(undefined);
@@ -151,13 +157,17 @@ export default function BannerForm({ match, location }: IProps) {
     getPrice();
     // return setFormValue(undefined);
   }, []);
+  useEffect(() => {
+    console.log('formValue=======', formValue);
+    console.log(Boolean(formValue));
+  }, [formValue]);
   return (
     <ContentCard>
       <ContentHeader
         label={isUpdated ? `Updated a Game Listing:  ${glid}` : 'Create a Game Listing'}
       />
       <div>
-        {(!isUpdated || formValue) && (
+        {(!isUpdated || formValue?.glid) && (
           <Form
             initialValues={formValue}
             labelCol={{ span: 4 }}

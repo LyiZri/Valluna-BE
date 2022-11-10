@@ -45,7 +45,7 @@ export default function Media({ list, setList }: IProps) {
           <Image src={url} height={80} />
         ) : (
           <p
-            className="text-blue-600 cursor-pointer w-72"
+            className="text-blue-600 cursor-pointer !w-72"
             onClick={() => {
               window.open(url);
             }}

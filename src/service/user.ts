@@ -7,3 +7,10 @@ export const userLogin = async (data: any) => {
     data: loginRequestDataWrap(data),
   });
 };
+export const gmailLogin = async (data: any) => {
+  return request('/api/gmaillogin', {
+    method: 'post',
+    requestType: 'form',
+    data: loginRequestDataWrap(data),
+  });
+};

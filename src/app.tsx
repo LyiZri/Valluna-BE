@@ -1,5 +1,7 @@
-// import RightContent from '@/components/RightContent';
-// import type { Settings as LayoutSettings } from '@ant-design/pro-components';
+/*App.js*/
+
+import { GoogleLogin } from 'react-google-login';
+import { gapi } from 'gapi-script';
 import { PageLoading } from '@ant-design/pro-components';
 import RightContent from '@/components/rightRender';
 
@@ -7,9 +9,14 @@ import { message } from 'antd';
 import { RequestConfig, useLocation } from 'umi';
 import { history } from 'umi';
 import { getUserName, removeUserInfo } from './utils/user';
+import { useEffect } from 'react';
 export const initialStateConfig = {
   loading: <PageLoading />,
 };
+/*App.js*/
+
+const clientId = '975305006991-7815lj09hu01o4rikkfj5im2mude24cq.apps.googleusercontent.com';
+
 export const request: RequestConfig = {
   // 统一的请求设定
   timeout: 15000,

@@ -1,12 +1,13 @@
 // @ts-nocheck
-import React from 'react';
+import React, { useRef, useEffect } from 'react';
 import { Avatar, Dropdown, Menu, Spin, message } from 'antd';
-
+import { GoogleLogout } from 'react-google-login';
 import { LogoutOutlined } from '@ant-design/icons';
 import { ILayoutRuntimeConfig } from '../types/interface.d';
 import { history } from 'umi';
 import { removeUserInfo } from '@/utils/user';
-
+import { CLIENT_ID } from '@/types/user';
+import { gapi } from 'gapi-script';
 export default function RightContent(
   runtimeLayout: ILayoutRuntimeConfig,
   loading: boolean,
@@ -16,17 +17,32 @@ export default function RightContent(
   if (runtimeLayout.rightRender) {
     return runtimeLayout.rightRender(initialState, setInitialState, runtimeLayout);
   }
-
+  const googleOutRef = useRef(null);
   const logout = () => {
+    console.log(123123);
+
     removeUserInfo();
     history.push('/user/login');
     message.success('Logout successfully');
   };
-
+  useEffect(() => {
+    const initClient = () => {
+      gapi.client.init({
+        clientId: CLIENT_ID,
+        scope: '',
+      });
+    };
+    gapi.load('client:auth2', initClient);
+  });
   const menu = (
     <Menu className="umi-plugin-layout-menu">
-      <Menu.Item key="logout" onClick={logout}>
-        <LogoutOutlined />
+      <Menu.Item
+        key="logout"
+        onClick={() => {
+          googleOutRef.current?.click();
+        }}
+      >
+        <LogoutOutlined className="mr-2" />
         Logout
       </Menu.Item>
     </Menu>
@@ -57,9 +73,15 @@ export default function RightContent(
 
   return (
     <div className="umi-plugin-layout-right anticon">
-      <Dropdown overlay={menu} overlayClassName="umi-plugin-layout-container">
+      {/* <Dropdown overlay={menu} overlayClassName="umi-plugin-layout-container">
         {avatar}
-      </Dropdown>
+      </Dropdown> */}
+      <GoogleLogout
+        ref={googleOutRef}
+        clientId={CLIENT_ID}
+        buttonText="Log Out"
+        onLogoutSuccess={logout}
+      ></GoogleLogout>
     </div>
   );
 }

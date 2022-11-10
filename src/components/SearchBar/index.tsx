@@ -91,7 +91,7 @@ export default function SearchBar(props: IProps) {
               return (
                 <Form.Item key={item.name} name={item.name}>
                   <Input
-                    className=" rounded-lg w-32 mr-4"
+                    className=" !rounded-lg !w-32 !mr-4"
                     value={item.value as string}
                     placeholder={item.placeholder}
                   />
@@ -107,7 +107,7 @@ export default function SearchBar(props: IProps) {
                 >
                   <Select
                     placeholder={item.placeholder}
-                    className="mr-4 rounded-lg !w-32"
+                    className="!mr-4 !rounded-lg !w-32"
                     tagRender={tagRender}
                     options={searchStatusData}
                   ></Select>
@@ -123,7 +123,7 @@ export default function SearchBar(props: IProps) {
                 >
                   <Select
                     placeholder={item.placeholder}
-                    className="mr-4 rounded-lg !w-32"
+                    className="!mr-4 !rounded-lg !w-32"
                     tagRender={tagRender}
                     options={searchFeaturedData}
                   ></Select>
@@ -138,16 +138,16 @@ export default function SearchBar(props: IProps) {
                   rules={[{ required: item.require }]}
                 >
                   <Select
-                    className="mr-4 rounded-lg !w-32 rounded-xl"
+                    className="!mr-4  !w-32 !rounded-xl"
                     placeholder={item?.placeholder}
                     loading={loading.gameListLoading}
                   >
                     {gameList.map((item: IGame, index: number) => {
                       if (item.status == 0) return;
-                      if (item.editstatus == 0 && item.draft.game_name) {
+                      if (item.editstatus == 0 && item?.draft?.game_name) {
                         return (
                           <Select.Option key={item.glid} value={item.glid}>
-                            <p>{item.draft.game_name}</p>
+                            <p>{item?.draft?.game_name}</p>
                           </Select.Option>
                         );
                       } else {
@@ -170,7 +170,7 @@ export default function SearchBar(props: IProps) {
                   rules={[{ required: item.require }]}
                 >
                   <Select
-                    className="mr-4 rounded-lg !w-32 rounded-xl"
+                    className="!mr-4 !w-32 !rounded-xl"
                     placeholder={item?.placeholder}
                     loading={loading.gameListLoading}
                   >
@@ -193,7 +193,7 @@ export default function SearchBar(props: IProps) {
                   rules={[{ required: item.require }]}
                 >
                   <Select
-                    className="mr-4 rounded-lg !w-32 rounded-xl"
+                    className="!mr-4  !w-32 !rounded-xl"
                     placeholder={item?.placeholder}
                     loading={loading.gameListLoading}
                   >
@@ -211,7 +211,7 @@ export default function SearchBar(props: IProps) {
                   className={'text-white ml-4'}
                   rules={[{ required: item.require }]}
                 >
-                  <div className="mr-4">{item.render}</div>
+                  <div className="!mr-4">{item.render}</div>
                 </Form.Item>
               );
             }
@@ -226,9 +226,9 @@ export default function SearchBar(props: IProps) {
                   type="link"
                   htmlType="reset"
                   onClick={() => props.search()}
-                  className="px-1"
+                  className="!px-1"
                 >
-                  <div className="px-1 rounded">
+                  <div className="!px-1 !rounded">
                     <Avatar
                       onClick={() => form.resetFields([])}
                       style={{ backgroundColor: '#fff' }}
@@ -239,8 +239,8 @@ export default function SearchBar(props: IProps) {
               );
             } else if (item.type == 'link-submit') {
               return (
-                <Button key={index} type="link" htmlType="submit" className="px-1">
-                  <div className="px-1 rounded">
+                <Button key={index} type="link" htmlType="submit" className="!px-1">
+                  <div className="!px-1 !rounded">
                     <Avatar
                       style={{ backgroundColor: '#fff' }}
                       icon={<SearchOutlined color="#000" className="text-black cursor-pointer" />}
@@ -254,7 +254,7 @@ export default function SearchBar(props: IProps) {
                   key={index}
                   name={item.name}
                   label={item.label}
-                  className={'text-white mr-4'}
+                  className={'text-white !mr-4'}
                   rules={[{ required: item.require }]}
                 >
                   {item.render}

@@ -6,13 +6,14 @@ export interface IGame {
   status?: number;
   editstatus?: number;
   operator?: string;
-  lastEditedDate: string;
+  lastEditedDate?: string;
   gamedes?: string;
   official_links?: any;
   download_links?: any;
   additional_media?: any;
+  additional_game_summary?: string;
   game_media?: any;
-  draft: IGameDraft;
+  draft?: IGame;
 }
 export interface IMedia {
   name: string;

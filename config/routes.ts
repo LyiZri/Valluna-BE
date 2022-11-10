@@ -32,7 +32,7 @@ export default <IRoute[]>[
     routes: [
       {
         path: '/account',
-        redirect: '/account/all-accounts',
+        redirect: '/account/user-access-controls',
         wrappers: ['@/wrappers/defaultAuth'],
       },
       {
@@ -57,16 +57,16 @@ export default <IRoute[]>[
         name: 'Homepage Banners',
         component: './Homepage/HomepageBanners',
       },
-      {
-        path: '/homepage/featured-articles',
-        name: 'Featured Articles',
-        component: './Homepage/FeaturedArticles',
-      },
-      {
-        path: '/homepage/featured-games',
-        name: 'Featured Games',
-        component: './Homepage/FeaturedGames',
-      },
+      // {
+      //   path: '/homepage/featured-articles',
+      //   name: 'Featured Articles',
+      //   component: './Homepage/FeaturedArticles',
+      // },
+      // {
+      //   path: '/homepage/featured-games',
+      //   name: 'Featured Games',
+      //   component: './Homepage/FeaturedGames',
+      // },
       {
         path: '/homepage/banner-form',
         component: './Homepage/HomepageBanners/bannerForm',

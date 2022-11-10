@@ -1,3 +1,4 @@
+export const CLIENT_ID = '975305006991-7815lj09hu01o4rikkfj5im2mude24cq.apps.googleusercontent.com';
 export interface IUsers {
   aid: number;
   email?: string;

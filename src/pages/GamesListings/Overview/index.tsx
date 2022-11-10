@@ -124,7 +124,7 @@ export default function GameListing() {
           col: 3,
           render: (
             <Button type="primary" className="mr-4" onClick={() => onPushBanner()}>
-              Create New Banner
+              Create New +
             </Button>
           ),
         }
@@ -221,7 +221,7 @@ export default function GameListing() {
       dataIndex: 'endEditedDate',
       key: 'endEditedDate',
       render: (_, { lastEditedDate }) => {
-        return <p>{timestampToTime(lastEditedDate)}</p>;
+        return <p>{timestampToTime(lastEditedDate || '')}</p>;
       },
     },
     haveAuth
@@ -275,12 +275,11 @@ export default function GameListing() {
         status: item.status,
         operator: item.operator,
         lastEditedDate: item.time,
+        ...item,
         ...item.draft,
       });
     });
     setList(_list);
-    console.log(_list);
-
     setLoading({ ...loading, tableLoading: false });
   };
 
@@ -336,6 +335,7 @@ export default function GameListing() {
     });
   };
   const onPushBanner = (glid?: string, index = 0) => {
+    console.log(list![index]);
     index != undefined && setGlInfo(list![index]);
     glid
       ? history.push(`/games-listings/game-listings-form?glid=${glid}`)
@@ -349,6 +349,7 @@ export default function GameListing() {
     await getList(searchOBJ);
   };
   useEffect(() => {
+    setGlInfo(undefined);
     getList();
   }, []);
   return (
