@@ -36,7 +36,14 @@ export const getUserToken = (): string => {
 export const setUserToken = (token: string) => {
   localStorage.setItem('token', token);
 };
-
+//清除所有cookie函数
+export function clearAllCookie() {
+  var keys = document.cookie.match(/[^ =;]+(?=\=)/g);
+  if (keys) {
+    for (var i = keys.length; i--; )
+      document.cookie = keys[i] + '=0;expires=' + new Date(0).toUTCString();
+  }
+}
 //roles
 export const getUserRoles = () => {
   return JSON.parse(localStorage.getItem('valluna-user-roles') || '');

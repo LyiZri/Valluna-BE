@@ -89,7 +89,9 @@ export default function userTable() {
     }
   };
   const gamilCheck = (gmail: string) => {
-    const reg = new RegExp(/^[A-Za-z0-9-_\u4e00-\u9fa5]+@gmail.com$/);
+    const reg = new RegExp(
+      /^[a-zA-Z0-9]+([-_.][a-zA-Z0-9]+)*@[a-zA-Z0-9]+([-_.][a-zA-Z0-9]+)*\.[a-z]{2,}$/,
+    );
     const a = reg.test(gmail);
     return a;
   };

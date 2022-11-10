@@ -5,7 +5,7 @@ import { GoogleLogout } from 'react-google-login';
 import { LogoutOutlined } from '@ant-design/icons';
 import { ILayoutRuntimeConfig } from '../types/interface.d';
 import { history } from 'umi';
-import { removeUserInfo } from '@/utils/user';
+import { clearAllCookie, removeUserInfo } from '@/utils/user';
 import { CLIENT_ID } from '@/types/user';
 import { gapi } from 'gapi-script';
 export default function RightContent(
@@ -22,6 +22,7 @@ export default function RightContent(
     console.log(123123);
 
     removeUserInfo();
+    clearAllCookie();
     history.push('/user/login');
     message.success('Logout successfully');
   };
@@ -36,12 +37,7 @@ export default function RightContent(
   // });
   const menu = (
     <Menu className="umi-plugin-layout-menu">
-      <Menu.Item
-        key="logout"
-        onClick={() => {
-          googleOutRef.current?.click();
-        }}
-      >
+      <Menu.Item key="logout" onClick={logout}>
         <LogoutOutlined className="mr-2" />
         Logout
       </Menu.Item>
@@ -73,11 +69,10 @@ export default function RightContent(
 
   return (
     <div className="umi-plugin-layout-right anticon">
-      {/* <Dropdown overlay={menu} overlayClassName="umi-plugin-layout-container">
+      <Dropdown overlay={menu} overlayClassName="umi-plugin-layout-container">
         {avatar}
-      </Dropdown> */}
+      </Dropdown>
       {/* <GoogleLogout
-        ref={googleOutRef}
         clientId={CLIENT_ID}
         buttonText="Log Out"
         onLogoutSuccess={logout}

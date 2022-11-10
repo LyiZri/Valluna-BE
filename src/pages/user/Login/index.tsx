@@ -20,10 +20,12 @@ const Login = () => {
       });
     };
     gapi.load('client:auth2', initClient);
-  });
+  }, []);
   // const intl = useIntl();
 
   const onSuccess = async (res: GoogleLoginResponse) => {
+    console.log(123);
+
     try {
       // 登录
       /** 此方法会跳转到 redirect 参数所在的位置 */
@@ -66,7 +68,7 @@ const Login = () => {
               onSuccess={onSuccess}
               onFailure={onFailure}
               cookiePolicy={'single_host_origin'}
-              isSignedIn={true}
+              isSignedIn={false}
             />
           </div>
         </div>
