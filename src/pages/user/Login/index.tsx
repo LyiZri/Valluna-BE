@@ -12,15 +12,15 @@ import { gmailLogin } from '@/service/user';
 import { CLIENT_ID } from '@/types/user';
 
 const Login = () => {
-  // useEffect(() => {
-  //   const initClient = () => {
-  //     gapi.client.init({
-  //       clientId: CLIENT_ID,
-  //       scope: '',
-  //     });
-  //   };
-  //   gapi.load('client:auth2', initClient);
-  // });
+  useEffect(() => {
+    const initClient = () => {
+      gapi.client.init({
+        clientId: CLIENT_ID,
+        scope: '',
+      });
+    };
+    gapi.load('client:auth2', initClient);
+  });
   // const intl = useIntl();
 
   const onSuccess = async (res: GoogleLoginResponse) => {
@@ -60,14 +60,14 @@ const Login = () => {
         >
           <div style={{ textAlign: 'center', fontWeight: 800 }}>
             <h1 style={{ fontSize: 60, marginTop: 200 }}>Welcome To Valluna BackEnd</h1>
-            {/* <GoogleLogin
+            <GoogleLogin
               clientId={CLIENT_ID}
               buttonText="Sign in with Google"
               onSuccess={onSuccess}
               onFailure={onFailure}
               cookiePolicy={'single_host_origin'}
               isSignedIn={true}
-            /> */}
+            />
           </div>
         </div>
       </div>
