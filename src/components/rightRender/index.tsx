@@ -25,15 +25,15 @@ export default function RightContent(
     history.push('/user/login');
     message.success('Logout successfully');
   };
-  useEffect(() => {
-    const initClient = () => {
-      gapi.client.init({
-        clientId: CLIENT_ID,
-        scope: '',
-      });
-    };
-    gapi.load('client:auth2', initClient);
-  });
+  // useEffect(() => {
+  //   const initClient = () => {
+  //     gapi.client.init({
+  //       clientId: CLIENT_ID,
+  //       scope: '',
+  //     });
+  //   };
+  //   gapi.load('client:auth2', initClient);
+  // });
   const menu = (
     <Menu className="umi-plugin-layout-menu">
       <Menu.Item
@@ -76,12 +76,12 @@ export default function RightContent(
       {/* <Dropdown overlay={menu} overlayClassName="umi-plugin-layout-container">
         {avatar}
       </Dropdown> */}
-      <GoogleLogout
+      {/* <GoogleLogout
         ref={googleOutRef}
         clientId={CLIENT_ID}
         buttonText="Log Out"
         onLogoutSuccess={logout}
-      ></GoogleLogout>
+      ></GoogleLogout> */}
     </div>
   );
 }
