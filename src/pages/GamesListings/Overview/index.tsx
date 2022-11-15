@@ -1,6 +1,6 @@
 import SearchBar from '@/components/SearchBar';
 import { IFormItem } from '@/types/form';
-import { Button, Image, Space, Switch, Table, Avatar, Tag, message, Select } from 'antd';
+import { Button, Image, Space, Switch, Table, Avatar, Tag, message, Select, Modal } from 'antd';
 import { useState } from 'react';
 import { useEffect } from 'react';
 import { ColumnsType } from 'antd/lib/table';
