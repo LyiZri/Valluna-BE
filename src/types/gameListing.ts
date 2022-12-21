@@ -15,6 +15,7 @@ export interface IGame {
   game_media?: any;
   draft?: IGame;
   game_image?: string
+  token_ticker?: any[]
 }
 export interface IMedia {
   name: string;

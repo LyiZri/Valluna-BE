@@ -10,7 +10,7 @@ import ContentEditor from '@/components/ContentEditor';
 import { getCoinPriceList } from '@/service/other';
 import Media from './components/Media';
 import FileUpload from '@/components/FileUpload';
-import { getCategoryList, editGLOverviewItem, addGLOverviewItem } from '@/service/gamelistings';
+import { getCategoryList, editGLOverviewItem, addGLOverviewItem, getTokenTickerList } from '@/service/gamelistings';
 import { getUserInfo } from '@/utils/user';
 
 interface IProps {
@@ -49,22 +49,18 @@ export default function BannerForm({ match, location }: IProps) {
     }
   });
   const getPrice = async () => {
-    const res = await getCoinPriceList({
-      page: 1,
-      type: -1,
-      pagesize: 100,
-      web: 1,
-    });
-    if (res.code == 200) {
-      setPriceList(res.data);
-    }
+    const res = await getTokenTickerList({});
+    res.code && setPriceList(res.data);
   };
   const onFinish = async (e: any) => {
     let _mediaList = mediaList ? mediaList.concat([]) : [];
     _mediaList?.map((item: IMedia, index: number) => {
       item.rank = index + 1;
     });
-
+    let token_ticker: never[] = []
+    formValue?.token_ticker?.map((item, index) => {
+      token_ticker.push(priceList[item])
+    })
     setLoading({
       ...loading,
       finishLoading: true,
@@ -76,6 +72,7 @@ export default function BannerForm({ match, location }: IProps) {
       additional_game_summary: richText,
       download_links: linksListValue,
       game_media: _mediaList,
+      token_ticker: token_ticker,
     };
     try {
       const data = isUpdated
@@ -120,7 +117,6 @@ export default function BannerForm({ match, location }: IProps) {
 
     _obj.time = (new Date()).valueOf()
     _obj.author = getUserInfo().email
-    console.log(_obj);
     if (modalValue.type == 0) {
       setFormValue({
         ...(formValue as IGame),
@@ -200,13 +196,13 @@ export default function BannerForm({ match, location }: IProps) {
             </Form.Item>
             <Form.Item required label="Blockchain" name={'game_blockchain'}>
               <Select mode="multiple">
-                {priceList?.map((item: any, index) => {
+                {priceList.length > 0 && priceList?.map((item: any, index) => {
                   return (
-                    <Select.Option value={item.code} key={item.code}>
+                    <Select.Option value={item.symbol} key={item.symbol}>
                       <div className="">
                         <p>
                           <Avatar src={item.logo} className="mr-4" size={16} />
-                          <span>{item.code}</span>
+                          <span>{item.slug}</span>
                         </p>
                       </div>
                     </Select.Option>
@@ -275,17 +271,14 @@ export default function BannerForm({ match, location }: IProps) {
             </Form.Item>
             <Form.Item required label="Token Ticker" name={'token_ticker'}>
               {/* <TokenTicker /> */}
-              <Select mode="multiple">
-                {priceList?.map((item: any, index) => {
+              <Select onChange={(a: any, b: any) => console.log(a, b)} mode="multiple">
+                {priceList.length > 0 && priceList?.map((item: any, index) => {
                   return (
-                    <Select.Option value={item.name} key={item.code}>
-                      <div className="flex justify-between">
-                        <p>
-                          <Avatar src={item.logo} className="mr-4" size={16} />
-                          <span>{item.name}</span>
-                        </p>
-                        <p>{item.current_price_usd}USDT</p>
-                      </div>
+                    <Select.Option value={index} key={item.code}>
+                      <p>
+                        <Avatar src={item.logo} className="mr-4" size={16} />
+                        <span>{item.symbol}</span>
+                      </p>
                     </Select.Option>
                   );
                 })}

@@ -85,3 +85,10 @@ export const delGLBlockChainItem = async (data: any) => {
     data: requestDataWrap(data),
   });
 };
+export const getTokenTickerList = async (data: any) => {
+  return request("/api/gamelistings/tickerlist", {
+    method: "post",
+    requestType: "form",
+    data: requestDataWrap(data)
+  })
+}
