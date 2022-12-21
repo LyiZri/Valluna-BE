@@ -35,3 +35,10 @@ export const changeArticlesListPublish = async (data: any) => {
     data: requestDataWrap(data),
   });
 };
+export const getArticlesDetails = async (data: any) => {
+  return request('/api/articles/fetching', {
+    method: 'post',
+    requestType: 'form',
+    data: requestDataWrap(data),
+  });
+}

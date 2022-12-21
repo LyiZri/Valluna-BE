@@ -14,6 +14,7 @@ export interface IGame {
   additional_game_summary?: string;
   game_media?: any;
   draft?: IGame;
+  game_image?: string
 }
 export interface IMedia {
   name: string;

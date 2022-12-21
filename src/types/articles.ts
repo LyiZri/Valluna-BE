@@ -1,4 +1,4 @@
-export interface IArticlesDraft {
+export interface IArticlesDraft extends IArticles {
   article_title: string;
   article_img: string;
   games: string[];
@@ -15,7 +15,8 @@ export interface IArticles {
   editstatus: number;
   status: number;
   draft: IArticlesDraft;
-  side_url: string;
+  site_url: string;
+  external_url: string;
   total_views: string;
   unique_views: string;
   shares: string;

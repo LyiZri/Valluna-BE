@@ -49,6 +49,8 @@ const FileUpload = ({ onSuccess, defaultSrc = '' }: IProps) => {
     }
   };
   useUpdateEffect(() => {
+    console.log("src=====", defaultSrc);
+
     setImageUrl(defaultSrc);
   }, [defaultSrc]);
   const uploadButton = (
@@ -67,7 +69,7 @@ const FileUpload = ({ onSuccess, defaultSrc = '' }: IProps) => {
       listType="picture-card"
       className="avatar-uploader"
       showUploadList={false}
-      beforeUpload={beforeUpload}
+      // beforeUpload={beforeUpload}
       action="/api/accounts/fileupload"
       onChange={handleChange}
     >

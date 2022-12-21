@@ -88,61 +88,61 @@ export default function HomepageBanners() {
     },
     haveAuth
       ? {
-          name: '',
-          type: '',
-          col: 3,
-          render: (
-            <Button
-              type="primary"
-              onClick={() => (haveAuth ? onPublishStatusChange(3) : expiredAuth())}
-            >
-              Unpublish
-            </Button>
-          ),
-        }
+        name: '',
+        type: '',
+        col: 3,
+        render: (
+          <Button
+            type="primary"
+            onClick={() => (haveAuth ? onPublishStatusChange(3) : expiredAuth())}
+          >
+            Unpublish
+          </Button>
+        ),
+      }
       : {},
     haveAuth
       ? {
-          name: '',
-          type: '',
-          col: 3,
-          render: (
-            <Button
-              type="primary"
-              onClick={() => (haveAuth ? onPublishStatusChange(2) : expiredAuth())}
-            >
-              Publish
-            </Button>
-          ),
-        }
+        name: '',
+        type: '',
+        col: 3,
+        render: (
+          <Button
+            type="primary"
+            onClick={() => (haveAuth ? onPublishStatusChange(2) : expiredAuth())}
+          >
+            Publish
+          </Button>
+        ),
+      }
       : {},
     haveAuth
       ? {
-          name: '',
-          type: '',
-          col: 3,
-          render: (
-            <Button type="primary" onClick={() => (haveAuth ? onDelete() : expiredAuth())}>
-              Delete
-            </Button>
-          ),
-        }
+        name: '',
+        type: '',
+        col: 3,
+        render: (
+          <Button type="primary" onClick={() => (haveAuth ? onDelete() : expiredAuth())}>
+            Delete
+          </Button>
+        ),
+      }
       : {},
     haveAuth
       ? {
-          name: '',
-          type: '',
-          col: 3,
-          render: (
-            <Button
-              type="primary"
-              className="mr-4"
-              onClick={() => (haveAuth ? onPushBanner() : expiredAuth())}
-            >
-              Create New +
-            </Button>
-          ),
-        }
+        name: '',
+        type: '',
+        col: 3,
+        render: (
+          <Button
+            type="primary"
+            className="mr-4"
+            onClick={() => (haveAuth ? onPushBanner() : expiredAuth())}
+          >
+            Create New +
+          </Button>
+        ),
+      }
       : {},
   ];
   const colums: ColumnsType<IArticles> = [
@@ -159,9 +159,25 @@ export default function HomepageBanners() {
       },
     },
     {
-      title: 'Side UTL',
-      dataIndex: 'site_url',
-      key: 'site_url',
+      title: 'External URL',
+      dataIndex: 'external_url',
+      key: 'external_url',
+      render: (_, { external_url, draft }) => {
+        const url = draft?.external_url ? draft?.external_url : external_url
+        return <a className='max-w-lg break-words' onClick={() => window.open(url)}>
+          {url}
+        </a>
+        // </Button>
+      },
+    },
+    {
+      title: "Klick URL",
+      dataIndex: "klick_url",
+      render: (_, { atid }) => {
+        return <a className='max-w-md break-words' onClick={() => window.open("https://www.klick.gg/" + atid)}>
+          www.klick.gg/{atid}
+        </a>
+      }
     },
     {
       title: 'Game',
@@ -235,11 +251,11 @@ export default function HomepageBanners() {
       title: 'Featured',
       dataIndex: 'featured',
       key: 'featured',
-      render: (a, { status, featured }, index) => (
+      render: (a, value, index) => (
         <Switch
-          checked={featured == 1}
-          disabled={status == 0}
-          onChange={() => onEnable(a, index)}
+          checked={value.featured == 1}
+          disabled={value.status == 0}
+          onChange={() => onEnable(value, index)}
         ></Switch>
       ),
     },
@@ -261,50 +277,62 @@ export default function HomepageBanners() {
     },
     haveAuth
       ? {
-          title: 'Action',
-          key: 'action',
-          width: 180,
-          render: (_, record, index) => (
-            <Space size="middle">
-              <IconFont
-                type="icon-bianji"
-                onClick={() => {
-                  haveAuth ? onPushBanner(record.atid, index) : expiredAuth();
-                }}
-                className="text-black text-xl cursor-pointer"
-              />
-              <IconFont
-                type="icon-delete"
-                onClick={() => {
-                  haveAuth ? onDelete(index) : expiredAuth();
-                }}
-                className={`text-black text-xl cursor-pointer `}
-              />
-            </Space>
-          ),
-        }
+        title: 'Action',
+        key: 'action',
+        width: 180,
+        render: (_, record, index) => (
+          <Space size="middle">
+            <IconFont
+              type="icon-bianji"
+              onClick={() => {
+                haveAuth ? onPushBanner(record.atid, index) : expiredAuth();
+              }}
+              className="text-black text-xl cursor-pointer"
+            />
+            <IconFont
+              type="icon-delete"
+              onClick={() => {
+                haveAuth ? onDelete(index) : expiredAuth();
+              }}
+              className={`text-black text-xl cursor-pointer `}
+            />
+          </Space>
+        ),
+      }
       : {},
   ];
   const getList = async () => {
     setLoading({ ...loading, tableLoading: true });
-    const { data } = await getArticlesList({ ...searchValue });
+    const { data } = await getArticlesList({});
     setList(data);
     setLoading({ ...loading, tableLoading: false });
+    return data
   };
-  const onEnable = async (a: boolean, index: number) => {
-    const listCopy: IArticles[] = list ? (list as IArticles[]).concat([]) : [];
-    listCopy[index].featured = Number(!Boolean(listCopy[index].featured));
+  const onEnable = async (articleValue: IArticles, index: number) => {
+    articleValue.featured = Number(!Boolean(articleValue.featured));
     let _games: string[] = [];
-    listCopy[index].games?.map((item: any, index) => {
+
+    articleValue.games?.map((item: any, index) => {
+      console.log(item);
+
       _games.push(item.glid);
     });
-    const { code } = await editArticlesList({
-      ...listCopy[index],
+    console.log(
+      {
+        ...articleValue,
+        action: 2,
+        glids: _games,
+        game_categorys: articleValue.categorys,
+      }
+    );
+
+    const { code, data } = await editArticlesList({
+      ...articleValue,
       action: 2,
       glids: _games,
-      game_categorys: listCopy[index].categorys,
+      game_categorys: articleValue.categorys,
     });
-    code == 1 && setList(listCopy);
+    code == 1 && await getList();
   };
   const onPushBanner = (atid?: string, index = 0) => {
     index != undefined && setAtInfo((list as IArticles[])[index]);
@@ -317,11 +345,19 @@ export default function HomepageBanners() {
     if (e == '0') {
       delete searchValue.article_status, delete searchValue.featured;
     } else if (e !== '3' && e !== '0') {
-      searchValue = {
-        ...searchValue,
-        article_status: e == '1' ? 0 : e == '2' ? 1 : undefined,
-      };
-      delete searchValue.featured;
+      const list: IArticles[] = await getList()
+      const _exlist: IArticles[] = []
+      const kikList: IArticles[] = []
+      list.map((item, index) => {
+        if (item.site_url || item?.draft?.site_url) {
+          _exlist.push(item)
+        } else {
+          kikList.push(item)
+        }
+      })
+      e == '1' && setList(_exlist)
+      e == "2" && setList(kikList)
+      return
     } else {
       searchValue = {
         ...searchValue,
@@ -390,14 +426,8 @@ export default function HomepageBanners() {
                 label: 'All Articles',
                 key: '0',
               },
-              {
-                label: 'Drafts',
-                key: '1',
-              },
-              {
-                label: 'Published',
-                key: '2',
-              },
+              { label: "External", key: '1' },
+              { label: "Klick", key: '2' },
               {
                 label: 'Featured',
                 key: '3',
@@ -416,6 +446,7 @@ export default function HomepageBanners() {
             loading={loading.tableLoading}
             columns={colums}
             dataSource={list}
+            scroll={{ x: "80vw" }}
           />
         </ContentCard>
       </section>

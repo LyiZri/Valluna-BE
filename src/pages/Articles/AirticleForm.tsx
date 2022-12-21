@@ -9,7 +9,7 @@ import ContentEditor from '@/components/ContentEditor';
 import { history } from 'umi';
 import FileUpload from '@/components/FileUpload';
 import { getCategoryList, getGLOverviewList } from '@/service/gamelistings';
-import { addArticlesList, editArticlesList } from '@/service/articles';
+import { addArticlesList, editArticlesList, getArticlesDetails } from '@/service/articles';
 import { IArticles, IArticlesDraft } from '@/types/articles';
 import { useForm } from 'antd/lib/form/Form';
 
@@ -21,6 +21,7 @@ interface IProps {
 export default function BannerForm({ match, location }: IProps) {
   const [imageUrl, setImageUrl] = useState<string>();
   const [richText, setRichText] = useState('');
+  const [isExternal, setIsExternal] = useState(false)
   const [loading, setLoading] = useState({
     imageLoading: false,
     categoriesListLoding: false,
@@ -43,49 +44,40 @@ export default function BannerForm({ match, location }: IProps) {
     }
   });
   const onFinish = async (e: any) => {
-    setLoading({
-      ...loading,
-      finishLoading: true,
-    });
+    // setLoading({
+    //   ...loading,
+    //   finishLoading: true,
+    // });
     const finishData = {
+      ...atInfo,
+      ...atInfo?.draft,
       ...e,
       article_img: imageUrl,
       content: richText,
     };
-    console.log({
-      ...finishData,
-      article_img: imageUrl,
-      action: saveStatus ? 2 : 0,
-      featured: formValue?.featured ? formValue.featured : 0,
-      atid,
-      glids: finishData?.glids ? finishData.glids : gameDefalutList,
-      game_categorys: finishData?.game_categorys ? finishData.game_categorys : formValue?.categorys,
-    });
-
     try {
       const data = isUpdated
         ? await editArticlesList({
-            ...finishData,
-            article_img: imageUrl,
-            action: saveStatus ? 2 : 0,
-            featured: formValue?.featured ? formValue.featured : 0,
-            atid,
-            glids: finishData?.glids ? finishData.glids : gameDefalutList,
-            game_categorys: finishData?.game_categorys
-              ? finishData.game_categorys
-              : formValue?.categorys,
-          })
+          ...finishData,
+          article_img: imageUrl,
+          action: saveStatus ? 2 : 0,
+          featured: formValue?.featured ? formValue.featured : 0,
+          atid,
+          glids: finishData?.glids ? finishData.glids : gameDefalutList,
+          game_categorys: finishData?.game_categorys
+            ? finishData.game_categorys
+            : formValue?.categorys,
+        })
         : await addArticlesList({
-            ...formValue,
-            ...finishData,
-            action: saveStatus ? 2 : 0,
-            featured: 0,
-          });
-      console.log(data);
+          ...formValue,
+          ...finishData,
+          action: saveStatus ? 2 : 0,
+          featured: 0,
+        });
       if (data.code == 1) {
         message.success('Success!');
       }
-    } catch (error) {}
+    } catch (error) { }
     setLoading({
       ...loading,
       finishLoading: false,
@@ -98,6 +90,21 @@ export default function BannerForm({ match, location }: IProps) {
     });
     const { data: categoryData } = await getCategoryList({});
     const { data: gameData } = await getGLOverviewList({});
+    if (isUpdated) {
+      const { data: pageData } = await getArticlesDetails({ atid: history?.location?.query?.atid })
+      let _pageData = pageData?.status == 1 || pageData?.editstatus == 2 ? pageData : pageData?.draft;
+      setIsExternal(pageData?.external_url ? true : false)
+      setFormValue(_pageData)
+      setImageUrl(_pageData?.article_img);
+      setRichText(_pageData?.content ? _pageData?.content : '');
+      let _gamelist: string[] = [];
+      _pageData?.games?.map((item: any, index: number) => {
+        _gamelist.push(item.glid);
+      });
+      setGameDefalutList(_gamelist);
+    } else {
+      setFormValue(undefined);
+    }
     setCategoryList(categoryData);
     setGameList(gameData);
     setLoading({
@@ -105,26 +112,10 @@ export default function BannerForm({ match, location }: IProps) {
       categoriesListLoding: false,
     });
   };
-
-  useEffect(() => {
-    if (isUpdated) {
-      let _atInfo = atInfo?.status == 1 || atInfo?.editstatus == 2 ? atInfo : atInfo?.draft;
-      setFormValue(_atInfo);
-      setImageUrl(_atInfo?.article_img);
-      setRichText(_atInfo?.content ? _atInfo?.content : '');
-      let _gamelist: string[] = [];
-      _atInfo?.games?.map((item: any, index) => {
-        _gamelist.push(item.glid);
-      });
-      setGameDefalutList(_gamelist);
-    } else {
-      setFormValue(undefined);
-    }
-  }, [atInfo]);
   useEffect(() => {
     getList();
     // return setFormValue(undefined);
-  }, []);
+  }, [atInfo]);
   return (
     <ContentCard>
       <ContentHeader
@@ -162,14 +153,13 @@ export default function BannerForm({ match, location }: IProps) {
               >
                 {gameList.map((item: IGame, index: number) => {
                   if (item.status == 0) return;
-                  if (item.editstatus == 0 && item.draft.game_name) {
+                  if (item.editstatus == 0 && item?.draft?.game_name) {
                     return (
                       <Select.Option key={item.glid} value={item.glid}>
-                        <p>{item.draft.game_name}</p>
+                        <p>{item?.draft?.game_name}</p>
                       </Select.Option>
                     );
                   } else {
-                    console.log('item============', { item, gameDefalutList });
                     return (
                       <Select.Option key={item.game_name} value={item.glid}>
                         <p>{item.game_name}</p>
@@ -195,7 +185,7 @@ export default function BannerForm({ match, location }: IProps) {
               </Select>
             </Form.Item>
             <Form.Item required label="Article">
-              <ContentEditor html={richText} setHtml={setRichText} />
+              <ContentEditor isExternal={isExternal} html={richText} setHtml={setRichText} />
             </Form.Item>
             <Form.Item>
               <Button onClick={history.goBack}>Cancel</Button>

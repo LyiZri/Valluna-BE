@@ -11,6 +11,7 @@ import { getCoinPriceList } from '@/service/other';
 import Media from './components/Media';
 import FileUpload from '@/components/FileUpload';
 import { getCategoryList, editGLOverviewItem, addGLOverviewItem } from '@/service/gamelistings';
+import { getUserInfo } from '@/utils/user';
 
 interface IProps {
   match: any;
@@ -27,8 +28,9 @@ export default function BannerForm({ match, location }: IProps) {
   });
   const [modalValue, setModalValue] = useState({
     visiable: false,
-    name: '',
     url: '',
+    image: "",
+    title: "",
     // 0:official links 1:addtional media
     type: 0,
   });
@@ -78,17 +80,17 @@ export default function BannerForm({ match, location }: IProps) {
     try {
       const data = isUpdated
         ? await editGLOverviewItem({
-            ...finishData,
-            action: 2,
-          })
+          ...finishData,
+          action: 2,
+        })
         : await addGLOverviewItem({
-            ...finishData,
-            action: 0,
-          });
+          ...finishData,
+          action: 0,
+        });
       if (data.code == 1) {
         message.success('Success!');
       }
-    } catch (error) {}
+    } catch (error) { }
     setLoading({
       ...loading,
       finishLoading: false,
@@ -107,9 +109,18 @@ export default function BannerForm({ match, location }: IProps) {
     });
   };
   const addValue = () => {
-    let _obj = {};
-    _obj[modalValue.name] = modalValue.url;
+    let _obj = {
+      time: 0,
+      author: "",
+      title: modalValue?.title,
+      image: modalValue?.image,
+      url: modalValue?.url
+    };
+    console.log((new Date()).valueOf());
 
+    _obj.time = (new Date()).valueOf()
+    _obj.author = getUserInfo().email
+    console.log(_obj);
     if (modalValue.type == 0) {
       setFormValue({
         ...(formValue as IGame),
@@ -133,8 +144,9 @@ export default function BannerForm({ match, location }: IProps) {
     setModalValue({
       visiable: isopen,
       type: modalType,
-      name: '',
       url: '',
+      image: "",
+      title: "",
     });
   };
   useEffect(() => {
@@ -145,7 +157,6 @@ export default function BannerForm({ match, location }: IProps) {
       });
       setRichText(glInfo?.draft?.additional_game_summary || glInfo?.additional_game_summary || '');
       // console.log(glInfo?.draft?.additional_media || glInfo?.additional_media || '');
-
       setMediaList(glInfo?.game_media);
     } else {
       setFormValue(undefined);
@@ -155,11 +166,9 @@ export default function BannerForm({ match, location }: IProps) {
   useEffect(() => {
     getList();
     getPrice();
-    // return setFormValue(undefined);
   }, []);
   useEffect(() => {
-    console.log('formValue=======', formValue);
-    console.log(Boolean(formValue));
+    setImageUrl(formValue?.game_image || "")
   }, [formValue]);
   return (
     <ContentCard>
@@ -180,6 +189,7 @@ export default function BannerForm({ match, location }: IProps) {
             </Form.Item>
             <Form.Item required label="Game Image" name="game_image">
               <FileUpload
+                defaultSrc={imageUrl}
                 onSuccess={(e: string) => {
                   setImageUrl(e);
                 }}
@@ -311,13 +321,13 @@ export default function BannerForm({ match, location }: IProps) {
       </div>
       <Modal open={modalValue.visiable} onOk={addValue} onCancel={() => initModalValue()}>
         <div>
-          <p>name:</p>
+          <p>title:</p>
           <Input
-            value={modalValue.name}
+            value={modalValue.title}
             onChange={(e) =>
               setModalValue({
                 ...modalValue,
-                name: e.target.value,
+                title: e.target.value,
               })
             }
           />
@@ -330,6 +340,18 @@ export default function BannerForm({ match, location }: IProps) {
               setModalValue({
                 ...modalValue,
                 url: e.target.value,
+              })
+            }
+          />
+        </div>
+        <div>
+          <p>image:</p>
+          <Input
+            value={modalValue.image}
+            onChange={(e) =>
+              setModalValue({
+                ...modalValue,
+                image: e.target.value,
               })
             }
           />
