@@ -18,6 +18,7 @@ interface IProps {
   location: any;
 }
 
+
 export default function BannerForm({ match, location }: IProps) {
   const [imageUrl, setImageUrl] = useState<string>();
   const [richText, setRichText] = useState('');
@@ -35,7 +36,7 @@ export default function BannerForm({ match, location }: IProps) {
     type: 0,
   });
   const { glInfo } = useModel('glInfo');
-  const [formValue, setFormValue] = useState<IGame>();
+  const [formValue, setFormValue] = useState<IGame>({});
   const [categoryList, setCategoryList] = useState([]);
   const [mediaList, setMediaList] = useState<IMedia[]>([]);
   const [priceList, setPriceList] = useState([]);
@@ -51,14 +52,37 @@ export default function BannerForm({ match, location }: IProps) {
   const getPrice = async () => {
     const res = await getTokenTickerList({});
     res.code && setPriceList(res.data);
+    return res.data
   };
+  const fliterToken = (formValue: IGame, priceList: any) => {
+    let _tokenTiker: number[] = []
+    if (typeof formValue?.token_ticker != "undefined" && typeof formValue?.token_ticker[0] != "number") {
+      formValue?.token_ticker.map((item: any, index: number) => {
+        const a = priceList.find((priceItem: any, priceIndex: any) => {
+          if (
+            priceItem.symbol == item.symbol
+          ) {
+            _tokenTiker.push(priceIndex)
+          }
+        })
+      })
+      // setFormValue({
+      //   ...formValue,
+      //   token_ticker: _tokenTiker
+      // })
+    }
+    return {
+      ...formValue,
+      token_ticker: _tokenTiker
+    }
+  }
   const onFinish = async (e: any) => {
     let _mediaList = mediaList ? mediaList.concat([]) : [];
     _mediaList?.map((item: IMedia, index: number) => {
       item.rank = index + 1;
     });
     let token_ticker: never[] = []
-    formValue?.token_ticker?.map((item, index) => {
+    e?.token_ticker?.map((item: number, _: any) => {
       token_ticker.push(priceList[item])
     })
     setLoading({
@@ -98,6 +122,7 @@ export default function BannerForm({ match, location }: IProps) {
       ...loading,
       categoriesListLoding: true,
     });
+
     const { data } = await getCategoryList({});
     setCategoryList(data);
     setLoading({
@@ -113,8 +138,6 @@ export default function BannerForm({ match, location }: IProps) {
       image: modalValue?.image,
       url: modalValue?.url
     };
-    console.log((new Date()).valueOf());
-
     _obj.time = (new Date()).valueOf()
     _obj.author = getUserInfo().email
     if (modalValue.type == 0) {
@@ -126,12 +149,11 @@ export default function BannerForm({ match, location }: IProps) {
         },
       });
     } else {
+      const addmediaArr = [_obj].concat(formValue?.additional_media)
+      // [...formValue?.additional_media, [_obj]]
       setFormValue({
         ...(formValue as IGame),
-        additional_media: {
-          ...formValue?.additional_media,
-          ..._obj,
-        },
+        additional_media: addmediaArr,
       });
     }
     initModalValue();
@@ -145,27 +167,54 @@ export default function BannerForm({ match, location }: IProps) {
       title: "",
     });
   };
+
+
+  const AdditionalMedia = () => {
+    return <div>
+      {
+        formValue?.additional_media.length && formValue?.additional_media?.map((item: any, index: number) => {
+          return <div key={index} className='p-2 rounded-xl bg-gray-300'>
+            <OfficialLinks
+              _list={item || {}}
+              _setList={(e: any) =>
+                setFormValue({
+                  ...(formValue as IGame),
+                  additional_media: e,
+                })
+              }
+            />
+          </div>
+        })
+      }
+    </div>
+  }
+
   useEffect(() => {
-    if (isUpdated) {
-      setFormValue({
+    (async () => {
+      const priceList = await getPrice();
+      const glInfoData = fliterToken({
         ...glInfo,
         ...glInfo?.draft,
-      });
-      setRichText(glInfo?.draft?.additional_game_summary || glInfo?.additional_game_summary || '');
-      // console.log(glInfo?.draft?.additional_media || glInfo?.additional_media || '');
-      setMediaList(glInfo?.game_media);
-    } else {
-      setFormValue(undefined);
-      setMediaList([]);
-    }
+      }, priceList)
+      console.log(glInfoData);
+
+      if (isUpdated) {
+        setFormValue(glInfoData);
+        setRichText(glInfo?.draft?.additional_game_summary || glInfo?.additional_game_summary || '');
+        setMediaList(glInfo?.game_media);
+      } else {
+        setFormValue({});
+        setMediaList([]);
+      }
+    })()
+
   }, [glInfo]);
   useEffect(() => {
     getList();
-    getPrice();
   }, []);
   useEffect(() => {
     setImageUrl(formValue?.game_image || "")
-  }, [formValue]);
+  }, [formValue, priceList]);
   return (
     <ContentCard>
       <ContentHeader
@@ -246,16 +295,8 @@ export default function BannerForm({ match, location }: IProps) {
               </div>
             </Form.Item>
             <Form.Item required label="Additional Media">
+              <AdditionalMedia />
               <div>
-                <OfficialLinks
-                  _list={formValue ? formValue.additional_media : {}}
-                  _setList={(e: any) =>
-                    setFormValue({
-                      ...(formValue as IGame),
-                      additional_media: e,
-                    })
-                  }
-                />
                 <Button
                   onClick={() => {
                     initModalValue(true, 1);
@@ -271,7 +312,10 @@ export default function BannerForm({ match, location }: IProps) {
             </Form.Item>
             <Form.Item required label="Token Ticker" name={'token_ticker'}>
               {/* <TokenTicker /> */}
-              <Select onChange={(a: any, b: any) => console.log(a, b)} mode="multiple">
+              <Select onChange={(a: number[], b: any[]) => {
+                console.log(formValue);
+
+              }} mode="multiple">
                 {priceList.length > 0 && priceList?.map((item: any, index) => {
                   return (
                     <Select.Option value={index} key={item.code}>
@@ -337,18 +381,18 @@ export default function BannerForm({ match, location }: IProps) {
             }
           />
         </div>
-        <div>
+        {modalValue.type && <div>
           <p>image:</p>
-          <Input
-            value={modalValue.image}
-            onChange={(e) =>
+          <FileUpload
+            defaultSrc={modalValue.image}
+            onSuccess={(e: string) => {
               setModalValue({
                 ...modalValue,
-                image: e.target.value,
+                image: e
               })
-            }
+            }}
           />
-        </div>
+        </div>}
       </Modal>
     </ContentCard>
   );

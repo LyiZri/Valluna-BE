@@ -35,9 +35,6 @@ export default function OfficialLinks({ _list, _setList }: IProps) {
               onBlur={(e) => {
                 setObj = _list;
                 setObj[name] = e.target.value;
-                console.log(setObj);
-                console.log(list);
-
                 _setList({
                   ...setObj,
                 });

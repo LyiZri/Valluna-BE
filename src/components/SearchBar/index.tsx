@@ -174,7 +174,7 @@ export default function SearchBar(props: IProps) {
                     placeholder={item?.placeholder}
                     loading={loading.gameListLoading}
                   >
-                    {chainList.map((item: IChainValue, index: number) => {
+                    {chainList?.map((item: IChainValue, index: number) => {
                       return (
                         <Select.Option key={item.blid} value={item.name}>
                           <p>{item.name}</p>
