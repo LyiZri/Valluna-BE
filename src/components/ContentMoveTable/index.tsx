@@ -1,6 +1,6 @@
 import { IMedia } from '@/types/gameListing';
 import { MenuOutlined } from '@ant-design/icons';
-import { Table } from 'antd';
+import { Table, TableProps } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import { arrayMoveImmutable } from 'array-move';
 import React, { useState } from 'react';
@@ -16,6 +16,7 @@ interface IProps<T> {
   rowkey?: string;
   order?: string;
   loading?: boolean;
+  scroll?: any
 }
 const DragHandle: any = SortableHandle(() => (
   <MenuOutlined style={{ cursor: 'grab', color: '#999' }} />
@@ -35,12 +36,14 @@ const ContentMoveTable = ({
   order = 'rank',
   rowkey = 'name',
   loading = false,
+  scroll
 }: IProps<any>) => {
   // const [list, setList] = useState(list);
   columns.unshift({
     title: 'Sort',
     dataIndex: 'sort',
-    width: 30,
+    width: 100,
+    fixed: "left",
     className: 'drag-visible',
     render: () => <DragHandle />,
   });
@@ -78,6 +81,7 @@ const ContentMoveTable = ({
       dataSource={list}
       columns={columns}
       rowKey={rowkey}
+      scroll={scroll}
       components={{
         body: {
           wrapper: DraggableContainer,

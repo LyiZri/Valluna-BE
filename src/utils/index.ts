@@ -23,3 +23,15 @@ export const getRandomColor = (): string => {
   const randomNum = getRandomIntNum(0, colorList.length - 1);
   return colorList[randomNum];
 };
+/**
+ * @desc 将长字符串转为短字符串，超出部分显示为...
+ * @param {*} str 待处理字符串
+ * @param length 需保留的长度 默认为10
+ * @return 返回处理后的字符串
+ * @author cas@nextme.one
+ */
+export const getShortenStr = (str: string, length = 10): string => {
+  if (typeof str !== "string") return str;
+  if (str.length < length) return str;
+  return str.slice(0, length) + "...";
+};

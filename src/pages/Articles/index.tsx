@@ -150,6 +150,7 @@ export default function HomepageBanners() {
       title: 'Article title',
       dataIndex: 'article_title',
       key: 'article_title',
+      width: 200,
       render: (_, { status, editstatus, article_title, draft }) => {
         if (status || editstatus == 2) {
           return <span>{article_title}</span>;
@@ -162,6 +163,7 @@ export default function HomepageBanners() {
       title: 'External URL',
       dataIndex: 'external_url',
       key: 'external_url',
+      width: 200,
       render: (_, { external_url, draft }) => {
         const url = draft?.external_url ? draft?.external_url : external_url
         return <a className='max-w-lg break-words' onClick={() => window.open(url)}>
@@ -173,6 +175,7 @@ export default function HomepageBanners() {
     {
       title: "Klick URL",
       dataIndex: "klick_url",
+      width: 200,
       render: (_, { atid }) => {
         return <a className='max-w-md break-words' onClick={() => window.open("https://www.klick.gg/" + atid)}>
           www.klick.gg/{atid}
@@ -183,6 +186,7 @@ export default function HomepageBanners() {
       title: 'Game',
       dataIndex: 'games',
       key: 'games',
+      width: 100,
       render: (_, { status, games, draft, editstatus }) => {
         let _games = status || editstatus == 2 ? games : draft.games;
         return _games?.map((item: any, index) => {
@@ -199,6 +203,7 @@ export default function HomepageBanners() {
       title: 'Total Views',
       dataIndex: 'total_views',
       key: 'total_views',
+      width: 100,
       render: () => {
         return <Tag color="cyan">-</Tag>;
       },
@@ -207,6 +212,7 @@ export default function HomepageBanners() {
       title: 'Unique Views',
       dataIndex: 'unique_views',
       key: 'unique_views',
+      width: 100,
       render: () => {
         return <Tag color="cyan">-</Tag>;
       },
@@ -215,6 +221,7 @@ export default function HomepageBanners() {
       title: 'Shares',
       dataIndex: 'shares',
       key: 'shares',
+      width: 100,
       render: () => {
         return <Tag color="cyan">-</Tag>;
       },
@@ -223,6 +230,7 @@ export default function HomepageBanners() {
       title: 'Status',
       dataIndex: 'status',
       key: 'status',
+      width: 100,
       render: (_, { status }) => {
         return <Tag color={!status ? 'orange' : 'green'}>{!status ? 'Draft' : 'Published'}</Tag>;
       },
@@ -231,6 +239,7 @@ export default function HomepageBanners() {
       title: 'Edit Status',
       dataIndex: 'editstatus',
       key: 'editstatus',
+      width: 100,
       render: (_, { editstatus }) => {
         let editText = '',
           editColor = '';
@@ -251,6 +260,7 @@ export default function HomepageBanners() {
       title: 'Featured',
       dataIndex: 'featured',
       key: 'featured',
+      width: 100,
       render: (a, value, index) => (
         <Switch
           checked={value.featured == 1}
@@ -263,23 +273,27 @@ export default function HomepageBanners() {
       title: 'Author',
       dataIndex: 'author',
       key: 'author',
+      width: 100,
     },
     {
       title: 'Operator',
       dataIndex: 'operator',
       key: 'operator',
+      width: 100,
     },
     {
       title: 'Last Edited',
       dataIndex: 'optime',
       key: 'optime',
+      width: 150,
       render: (_, { optime }) => <p>{timestampToTime(optime)}</p>,
     },
     haveAuth
       ? {
         title: 'Action',
         key: 'action',
-        width: 180,
+        width: 120,
+        fixed: "right",
         render: (_, record, index) => (
           <Space size="middle">
             <IconFont

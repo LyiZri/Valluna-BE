@@ -13,12 +13,14 @@ import { deleteHPBannerList, getHPBannerList, editHPBannerList } from '@/service
 import { LoadingOutlined } from '@ant-design/icons';
 import ContentMoveTable from '@/components/ContentMoveTable';
 import { useUserAuth } from '@/utils/user';
+import { getShortenStr } from '@/utils';
 export default function HomepageBanners() {
   const [list, setList] = useState<IBanners[]>();
   const [loading, setLoading] = useState({
     tableLoading: false,
     deleteLoading: false,
     deleteIndex: -1,
+    switchLoading: false
   });
   const haveAuth = useUserAuth('Homepage');
   const { setBannerInfo } = useModel('bannerInfo');
@@ -85,6 +87,7 @@ export default function HomepageBanners() {
     {
       title: 'Image Preview',
       dataIndex: 'image',
+      width: 250,
       key: 'image',
       render: (_, { file }) => <Image src={file} width={200} height={50} />,
     },
@@ -92,10 +95,11 @@ export default function HomepageBanners() {
       title: 'URL',
       dataIndex: 'url',
       key: 'url',
+      width: 300,
       render: (_, { url }) => {
         return (
           <Button type="link" onClick={() => window.open(url)}>
-            {url}
+            {getShortenStr(url || "", 28)}
           </Button>
         );
       },
@@ -106,10 +110,11 @@ export default function HomepageBanners() {
       key: 'enable',
       render: (a, record, index) => (
         <Switch
+          loading={loading.switchLoading}
           checked={record.enable === 1}
           disabled={!haveAuth}
           onChange={() => onEnable(a, record, index)}
-        ></Switch>
+        />
       ),
     },
     {
@@ -128,6 +133,7 @@ export default function HomepageBanners() {
         title: 'Action',
         key: 'action',
         width: 180,
+        fixed: "right",
         render: (_, record, index) => (
           <Space size="middle">
             <IconFont
@@ -162,8 +168,16 @@ export default function HomepageBanners() {
   const onEnable = async (a: boolean, e: IBanners, index: number) => {
     const listCopy: IBanners[] = list ? (list as IBanners[]).concat([]) : [];
     listCopy[index].enable = Number(!Boolean(listCopy[index].enable));
-    console.log(a, e, index);
-    setList(listCopy);
+    setLoading({
+      ...loading,
+      switchLoading: true
+    })
+    const { code } = await editHPBannerList({ bid: e.bid, enable: Number(Boolean(e.enable)) })
+    setLoading({
+      ...loading,
+      switchLoading: false
+    })
+    setList(code == 1 ? listCopy : list);
   };
   const onPushBanner = (record?: IBanners) => {
     record ? setBannerInfo(record) : setBannerInfo(undefined);
@@ -230,6 +244,7 @@ export default function HomepageBanners() {
             columns={colums}
             rowkey="bid"
             list={list ? list : []}
+            scroll={{ x: "80vw" }}
           />
         </ContentCard>
       </section>

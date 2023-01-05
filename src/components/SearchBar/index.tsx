@@ -79,7 +79,7 @@ export default function SearchBar(props: IProps) {
     <div className={`search-bar ${props.className}`}>
       <Form
         name="advanced_search"
-        className="ant-advanced-search-form flex justify-between"
+        className="ant-advanced-search-form flex flex-wrap justify-between"
         form={form}
         onFinish={(e) => {
           props.search(e);
