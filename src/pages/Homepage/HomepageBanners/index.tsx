@@ -53,27 +53,27 @@ export default function HomepageBanners() {
     },
     haveAuth
       ? {
-          name: '',
-          type: '',
-          col: 3,
-          render: (
-            <Button type="primary" className="mr-4" onClick={() => onPushBanner()}>
-              Create New Banner
-            </Button>
-          ),
-        }
+        name: '',
+        type: '',
+        col: 3,
+        render: (
+          <Button type="primary" className="mr-4" onClick={() => onPushBanner()}>
+            Create New Banner
+          </Button>
+        ),
+      }
       : {},
     haveAuth
       ? {
-          name: '',
-          type: '',
-          col: 3,
-          render: (
-            <Button onClick={() => onChangeOrder()} type="primary">
-              Change Order
-            </Button>
-          ),
-        }
+        name: '',
+        type: '',
+        col: 3,
+        render: (
+          <Button onClick={() => onChangeOrder()} type="primary">
+            Change Order
+          </Button>
+        ),
+      }
       : {},
   ];
   const colums: ColumnsType<IBanners> = [
@@ -125,32 +125,32 @@ export default function HomepageBanners() {
     },
     haveAuth
       ? {
-          title: 'Action',
-          key: 'action',
-          width: 180,
-          render: (_, record, index) => (
-            <Space size="middle">
+        title: 'Action',
+        key: 'action',
+        width: 180,
+        render: (_, record, index) => (
+          <Space size="middle">
+            <IconFont
+              type="icon-bianji"
+              onClick={() => {
+                onPushBanner(record);
+              }}
+              className="text-black text-xl cursor-pointer"
+            />
+            {loading.deleteLoading && loading.deleteIndex == index ? (
+              <LoadingOutlined />
+            ) : (
               <IconFont
-                type="icon-bianji"
+                type="icon-delete"
                 onClick={() => {
-                  onPushBanner(record);
+                  onDelete(record.bid, index);
                 }}
                 className="text-black text-xl cursor-pointer"
               />
-              {loading.deleteLoading && loading.deleteIndex == index ? (
-                <LoadingOutlined />
-              ) : (
-                <IconFont
-                  type="icon-delete"
-                  onClick={() => {
-                    onDelete(record.bid, index);
-                  }}
-                  className="text-black text-xl cursor-pointer"
-                />
-              )}
-            </Space>
-          ),
-        }
+            )}
+          </Space>
+        ),
+      }
       : {},
   ];
   const getList = async (searchValue = {}) => {
@@ -162,6 +162,7 @@ export default function HomepageBanners() {
   const onEnable = async (a: boolean, e: IBanners, index: number) => {
     const listCopy: IBanners[] = list ? (list as IBanners[]).concat([]) : [];
     listCopy[index].enable = Number(!Boolean(listCopy[index].enable));
+    console.log(a, e, index);
     setList(listCopy);
   };
   const onPushBanner = (record?: IBanners) => {
